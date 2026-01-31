@@ -49,13 +49,13 @@ public final class Item implements Encodable {
         outPacket.encodeFT(dateExpire); // dateExpire
 
         switch (getItemType()) {
-            case EQUIP -> {
-                // GW_ItemSlotEquip::RawDecode
-                equipData.encode(outPacket, this);
-            }
             case PET -> {
                 // GW_ItemSlotPet::RawDecode
                 petData.encode(outPacket, this);
+            }
+            case EQUIP -> {
+                // GW_ItemSlotEquip::RawDecode
+                equipData.encode(outPacket, this);
             }
             default -> {
                 // GW_ItemSlotBundle::RawDecode

@@ -6,7 +6,6 @@ import kinoko.util.BitFlag;
 import kinoko.world.field.life.MovePath;
 import kinoko.world.job.explorer.Bowman;
 import kinoko.world.job.explorer.Thief;
-import kinoko.world.job.resistance.WildHunter;
 import kinoko.world.skill.*;
 import kinoko.world.user.CharacterData;
 import kinoko.world.user.GuildInfo;
@@ -70,8 +69,6 @@ public final class UserRemote {
             }
             if (SkillConstants.isMagicKeydownSkill(attack.skillId)) {
                 outPacket.encodeInt(attack.keyDown); // tKeyDown
-            } else if (attack.skillId == WildHunter.JAGUAR_OSHI_ATTACK) {
-                outPacket.encodeInt(attack.swallowMobTemplateId); // dwSwallowMobTemplateID
             }
         }
         return outPacket;
@@ -87,18 +84,18 @@ public final class UserRemote {
         return outPacket;
     }
 
-    public static OutPacket movingShootAttackPrepare(User user, int skillId, int slv, short actionAndDir, byte attackSpeed) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.UserMovingShootAttackPrepare);
-        outPacket.encodeInt(user.getCharacterId());
-        outPacket.encodeByte(user.getLevel());
-        outPacket.encodeByte(slv);
-        if (slv != 0) {
-            outPacket.encodeInt(skillId);
-        }
-        outPacket.encodeShort(actionAndDir);
-        outPacket.encodeByte(attackSpeed);
-        return outPacket;
-    }
+//    public static OutPacket movingShootAttackPrepare(User user, int skillId, int slv, short actionAndDir, byte attackSpeed) {
+//        final OutPacket outPacket = OutPacket.of(OutHeader.UserMovingShootAttackPrepare);
+//        outPacket.encodeInt(user.getCharacterId());
+//        outPacket.encodeByte(user.getLevel());
+//        outPacket.encodeByte(slv);
+//        if (slv != 0) {
+//            outPacket.encodeInt(skillId);
+//        }
+//        outPacket.encodeShort(actionAndDir);
+//        outPacket.encodeByte(attackSpeed);
+//        return outPacket;
+//    }
 
     public static OutPacket skillCancel(User user, int skillId) {
         final OutPacket outPacket = OutPacket.of(OutHeader.UserSkillCancel);
@@ -150,14 +147,14 @@ public final class UserRemote {
         return outPacket;
     }
 
-    public static OutPacket showUpgradeTombEffect(User user, int itemId, int x, int y) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.UserShowUpgradeTombEffect);
-        outPacket.encodeInt(user.getCharacterId());
-        outPacket.encodeInt(itemId); // nItemID
-        outPacket.encodeInt(x); // nPosX
-        outPacket.encodeInt(y); // nPosY
-        return outPacket;
-    }
+//    public static OutPacket showUpgradeTombEffect(User user, int itemId, int x, int y) {
+//        final OutPacket outPacket = OutPacket.of(OutHeader.UserShowUpgradeTombEffect);
+//        outPacket.encodeInt(user.getCharacterId());
+//        outPacket.encodeInt(itemId); // nItemID
+//        outPacket.encodeInt(x); // nPosX
+//        outPacket.encodeInt(y); // nPosY
+//        return outPacket;
+//    }
 
     public static OutPacket setActivePortableChair(User user, int itemId) {
         final OutPacket outPacket = OutPacket.of(OutHeader.UserSetActivePortableChair);

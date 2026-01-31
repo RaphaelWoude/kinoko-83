@@ -72,29 +72,17 @@ import java.util.*;
 public final class UserHandler {
     private static final Logger log = LogManager.getLogger(UserHandler.class);
 
-    @Handler(InHeader.UserMove)
-    public static void handleUserMove(User user, InPacket inPacket) {
-        inPacket.decodeInt(); // 0
-        inPacket.decodeInt(); // 0
-        final byte fieldKey = inPacket.decodeByte(); // bFieldKey
-        if (user.getFieldKey() != fieldKey) {
-            user.dispose();
-            return;
-        }
-        inPacket.decodeInt(); // 0
-        inPacket.decodeInt(); // 0
-        final int crc = inPacket.decodeInt(); // dwCrc
-        inPacket.decodeInt(); // 0
-        inPacket.decodeInt(); // Crc32
-
-        final Field field = user.getField();
-        if (field.getFieldCrc() != crc) {
-            log.warn("Received mismatching CRC for field ID : {}", field.getFieldId());
-        }
-        final MovePath movePath = MovePath.decode(inPacket);
-        movePath.applyTo(user);
-        field.broadcastPacket(UserRemote.move(user, movePath), user);
-    }
+//    @Handler(InHeader.UserMove)
+//    public static void handleUserMove(User user, InPacket inPacket) {
+//        inPacket.decodeInt(); // 0
+//        inPacket.decodeInt(); // 0
+//        inPacket.decodeByte(); // 0
+//
+//        final Field field = user.getField();
+//        final MovePath movePath = MovePath.decode(inPacket);
+//        movePath.applyTo(user);
+//        field.broadcastPacket(UserRemote.move(user, movePath), user);
+//    }
 
     @Handler(InHeader.UserSitRequest)
     public static void handleUserSitRequest(User user, InPacket inPacket) {
@@ -121,7 +109,6 @@ public final class UserHandler {
 
     @Handler(InHeader.UserChat)
     public static void handleUserChat(User user, InPacket inPacket) {
-        inPacket.decodeInt(); // update_time
         final String text = inPacket.decodeString(); // sText
         final boolean onlyBalloon = inPacket.decodeBoolean(); // bOnlyBalloon
         if (text.startsWith(ServerConfig.COMMAND_PREFIX) && text.length() > 1) {
@@ -155,13 +142,13 @@ public final class UserHandler {
         user.getField().broadcastPacket(UserRemote.setActiveEffectItem(user, itemId), user); // self-cast not required
     }
 
-    @Handler(InHeader.UserUpgradeTombEffect)
-    public static void handleUserUpgradeTombEffect(User user, InPacket inPacket) {
-        final int itemId = inPacket.decodeInt(); // 5510000 (Wheel of Destiny)
-        final int x = inPacket.decodeInt(); // ptRevive.x
-        final int y = inPacket.decodeInt(); // ptRevive.y
-        user.getField().broadcastPacket(UserRemote.showUpgradeTombEffect(user, itemId, x, y), user);
-    }
+//    @Handler(InHeader.UserUpgradeTombEffect)
+//    public static void handleUserUpgradeTombEffect(User user, InPacket inPacket) {
+//        final int itemId = inPacket.decodeInt(); // 5510000 (Wheel of Destiny)
+//        final int x = inPacket.decodeInt(); // ptRevive.x
+//        final int y = inPacket.decodeInt(); // ptRevive.y
+//        user.getField().broadcastPacket(UserRemote.showUpgradeTombEffect(user, itemId, x, y), user);
+//    }
 
 
     // NPC HANDLERS ----------------------------------------------------------------------------------------------------
@@ -217,7 +204,7 @@ public final class UserHandler {
             return;
         }
         switch (lastMessageType) {
-            case SAY, SAYIMAGE, ASKYESNO, ASKACCEPT -> {
+            case SAY, ASKYESNO, ASKACCEPT -> {
                 scriptDialog.submitAnswer(ScriptAnswer.withAction(action));
             }
             case ASKTEXT, ASKBOXTEXT -> {
@@ -594,7 +581,7 @@ public final class UserHandler {
         user.write(WvsContext.statChanged(addApResult, true));
     }
 
-    @Handler({ InHeader.UserChangeStatRequest, InHeader.UserChangeStatRequestByItemOption })
+    @Handler({ InHeader.UserChangeStatRequest })
     public static void handleUserChangeStatRequest(User user, InPacket inPacket) {
         inPacket.decodeInt(); // update_time
         final int mask = inPacket.decodeInt(); // 0x1400
@@ -666,21 +653,9 @@ public final class UserHandler {
                     .mapToInt(SkillRecord::getSkillLevel)
                     .sum();
             // Beginner sp is calculated by level
-            final int totalSp;
-            if (JobConstants.isResistanceJob(skillRoot)) {
-                totalSp = Math.min(user.getLevel(), 10) - 1; // max total sp = 9
-            } else {
-                totalSp = Math.min(user.getLevel(), 7) - 1; // max total sp = 6
-            }
+            final int totalSp = Math.min(user.getLevel(), 7) - 1; // max total sp = 6
             // Check if sp can be added
             if (spentSp >= totalSp) {
-                log.error("Tried to add skill {} without having the required amount of sp", skillId);
-                user.dispose();
-                return;
-            }
-        } else if (JobConstants.isExtendSpJob(skillRoot)) {
-            final int jobLevel = JobConstants.getJobLevel(skillRoot);
-            if (!user.getCharacterStat().getSp().removeSp(jobLevel, 1)) {
                 log.error("Tried to add skill {} without having the required amount of sp", skillId);
                 user.dispose();
                 return;
@@ -695,7 +670,7 @@ public final class UserHandler {
 
         // Add skill point and update client
         skillRecord.setSkillLevel(skillRecord.getSkillLevel() + 1);
-        user.write(WvsContext.statChanged(Stat.SP, JobConstants.isExtendSpJob(user.getJob()) ? user.getCharacterStat().getSp() : (short) user.getCharacterStat().getSp().getNonExtendSp(), false));
+        user.write(WvsContext.statChanged(Stat.SP, (short) user.getCharacterStat().getSp().getNonExtendSp(), false));
         user.write(WvsContext.changeSkillRecordResult(skillRecord, true));
         user.updatePassiveSkillData();
         user.validateStat();
@@ -766,10 +741,6 @@ public final class UserHandler {
     @Handler(InHeader.UserPortalScriptRequest)
     public static void handleUserPortalScriptRequest(User user, InPacket inPacket) {
         final byte fieldKey = inPacket.decodeByte(); // bFieldKey
-        if (user.getFieldKey() != fieldKey) {
-            user.dispose();
-            return;
-        }
         final String portalName = inPacket.decodeString(); // sName
         final short x = inPacket.decodeShort(); // GetPos()->x
         final short y = inPacket.decodeShort(); // GetPos()->y
@@ -784,10 +755,6 @@ public final class UserHandler {
     @Handler(InHeader.UserPortalTeleportRequest)
     public static void handleUserPortalTeleportRequest(User user, InPacket inPacket) {
         final byte fieldKey = inPacket.decodeByte(); // bFieldKey
-        if (user.getFieldKey() != fieldKey) {
-            user.dispose();
-            return;
-        }
         final String portalName = inPacket.decodeString(); // sPortalName
         final short x = inPacket.decodeShort(); // GetPos()->x
         final short y = inPacket.decodeShort(); // GetPos()->x
@@ -838,7 +805,6 @@ public final class UserHandler {
             return;
         }
         final QuestInfo questInfo = questInfoResult.get();
-
         final QuestRequestType questRequestType = QuestRequestType.getByValue(action);
         switch (questRequestType) {
             case LostItem -> {
@@ -851,7 +817,6 @@ public final class UserHandler {
             }
             case AcceptQuest -> {
                 final int templateId = inPacket.decodeInt(); // dwNpcTemplateID
-                final int itemPos = inPacket.decodeInt(); // CWvsContext.m_nQuestDeliveryItemPos
                 if (!questInfo.isAutoAlert()) {
                     final short x = inPacket.decodeShort(); // ptUserPos.x
                     final short y = inPacket.decodeShort(); // ptUserPos.y
@@ -868,12 +833,11 @@ public final class UserHandler {
             }
             case CompleteQuest -> {
                 final int templateId = inPacket.decodeInt(); // dwNpcTemplateID
-                final int itemPos = inPacket.decodeInt(); // CWvsContext.m_nQuestDeliveryItemPos
                 if (!questInfo.isAutoAlert()) {
                     final short x = inPacket.decodeShort(); // ptUserPos.x
                     final short y = inPacket.decodeShort(); // ptUserPos.y
                 }
-                final int rewardIndex = inPacket.decodeInt(); // nIdx - for selecting reward
+                final int rewardIndex = inPacket.decodeShort(); // nIdx - for selecting reward
                 final Optional<Tuple<QuestRecord, Integer>> questCompleteResult = questInfo.completeQuest(user, rewardIndex);
                 if (questCompleteResult.isEmpty()) {
                     log.error("Failed to complete quest : {}", questId);
@@ -1738,7 +1702,7 @@ public final class UserHandler {
                         log.error("Unhandled Marriage invitation memo for marriage ID : {}", marriageId);
                     } else if (memoType == MemoType.INCPOP) {
                         user.addPop(1);
-                        user.write(MessagePacket.incPop(1));
+                        // user.write(MessagePacket.incPop(1));
                     }
                 }
             }
@@ -1827,31 +1791,6 @@ public final class UserHandler {
                 log.error("Unhandled func key mapped type : {}", funcKeyMappedType);
             }
         }
-    }
-
-    @Handler(InHeader.TalkToTutor)
-    public static void handleTalkToTutor(User user, InPacket inPacket) {
-        if (JobConstants.isCygnusJob(user.getJob())) {
-            ScriptDispatcher.startNpcScript(user, user, CygnusTutorial.TALK_TO_TUTOR_SCRIPT, 1101008);
-        } else {
-            ScriptDispatcher.startNpcScript(user, user, AranTutorial.TALK_TO_TUTOR_SCRIPT, 1202000);
-        }
-    }
-
-    @Handler(InHeader.RequestIncCombo)
-    public static void handleRequestIncCombo(User user, InPacket inPacket) {
-        // combo handled in AttackHandler
-    }
-
-    @Handler(InHeader.UpdateGMBoard)
-    public static void handleUpdateGmBoard(User user, InPacket inPacket) {
-        inPacket.decodeInt(); // nGameOpt_OpBoardIndex
-    }
-
-    @Handler(InHeader.DragonMove)
-    public static void handleDragonMove(User user, InPacket inPacket) {
-        final MovePath movePath = MovePath.decode(inPacket);
-        user.getField().broadcastPacket(DragonPacket.dragonMove(user, movePath), user);
     }
 
     @Handler(InHeader.QuickslotKeyMappedModified)

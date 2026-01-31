@@ -14,7 +14,6 @@ import kinoko.server.packet.OutPacket;
 import kinoko.world.field.drop.DropEnterType;
 import kinoko.world.field.summoned.Summoned;
 import kinoko.world.item.*;
-import kinoko.world.job.resistance.BattleMage;
 import kinoko.world.quest.QuestRecord;
 import kinoko.world.quest.QuestState;
 import kinoko.world.skill.SkillConstants;
@@ -52,15 +51,6 @@ public final class UserPool extends FieldObjectPool<User> {
                     user.write(SummonedPacket.summonedEnterField(existingUser, summoned));
                 }
             }
-            if (existingUser.getDragon() != null) {
-                user.write(DragonPacket.dragonEnterField(existingUser, existingUser.getDragon()));
-            }
-            if (existingUser.getOpenGate() != null) {
-                user.write(FieldPacket.openGateCreated(existingUser, existingUser.getOpenGate(), false));
-                if (existingUser.getOpenGate().getSecondGate() != null) {
-                    user.write(FieldPacket.openGateCreated(existingUser, existingUser.getOpenGate().getSecondGate(), false));
-                }
-            }
         });
 
         // Add user to pool
@@ -72,12 +62,6 @@ public final class UserPool extends FieldObjectPool<User> {
             pet.setPosition(field, user.getX(), user.getY());
             broadcastPacket(PetPacket.petActivated(user, pet));
             user.write(PetPacket.petLoadExceptionList(user, pet.getPetIndex(), pet.getItemSn(), user.getConfigManager().getPetExceptionList()));
-        }
-
-        // Add user dragon
-        if (user.getDragon() != null) {
-            user.getDragon().setPosition(field, user.getX(), user.getY());
-            broadcastPacket(DragonPacket.dragonEnterField(user, user.getDragon()));
         }
 
         // Add user summoned
@@ -186,17 +170,8 @@ public final class UserPool extends FieldObjectPool<User> {
         // Remove affected areas
         field.getAffectedAreaPool().removeByOwnerId(user.getCharacterId());
 
-        // Remove gates
-        if (user.getOpenGate() != null) {
-            user.getOpenGate().destroy();
-            user.setOpenGate(null);
-        }
-
         // Remove party aura
         user.resetTemporaryStat(CharacterTemporaryStat.AURA_STAT);
-        if (user.getSecondaryStat().hasOption(CharacterTemporaryStat.Aura)) {
-            BattleMage.cancelPartyAura(user, user.getSecondaryStat().getOption(CharacterTemporaryStat.Aura).rOption);
-        }
         return true;
     }
 
@@ -223,14 +198,6 @@ public final class UserPool extends FieldObjectPool<User> {
                     user.write(WvsContext.resetTownPortal());
                     user.write(MessagePacket.skillExpire(townPortal.getSkillId()));
                     user.getConnectedServer().notifyUserUpdate(user);
-                }
-            }
-            // Expire open gate
-            final OpenGate openGate = user.getOpenGate();
-            if (openGate != null) {
-                if (openGate.getExpireTime().isBefore(now)) {
-                    openGate.destroy();
-                    user.setOpenGate(null);
                 }
             }
             // Expire items

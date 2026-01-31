@@ -43,12 +43,6 @@ public final class EquipDataCodec extends MappingCodec<UdtValue, EquipData> {
         equipData.setCuc(value.getByte(EquipDataUDT.CUC));
         equipData.setIuc(value.getInt(EquipDataUDT.IUC));
         equipData.setChuc(value.getByte(EquipDataUDT.CHUC));
-        equipData.setGrade(value.getByte(EquipDataUDT.GRADE));
-        equipData.setOption1(value.getShort(EquipDataUDT.OPTION_1));
-        equipData.setOption2(value.getShort(EquipDataUDT.OPTION_2));
-        equipData.setOption3(value.getShort(EquipDataUDT.OPTION_3));
-        equipData.setSocket1(value.getShort(EquipDataUDT.SOCKET_1));
-        equipData.setSocket2(value.getShort(EquipDataUDT.SOCKET_2));
         equipData.setLevelUpType(value.getByte(EquipDataUDT.LEVEL_UP_TYPE));
         equipData.setLevel(value.getByte(EquipDataUDT.LEVEL));
         equipData.setExp(value.getInt(EquipDataUDT.EXP));
@@ -81,12 +75,6 @@ public final class EquipDataCodec extends MappingCodec<UdtValue, EquipData> {
                 .setByte(EquipDataUDT.CUC, equipData.getCuc())
                 .setInt(EquipDataUDT.IUC, equipData.getIuc())
                 .setByte(EquipDataUDT.CHUC, equipData.getChuc())
-                .setByte(EquipDataUDT.GRADE, equipData.getGrade())
-                .setShort(EquipDataUDT.OPTION_1, equipData.getOption1())
-                .setShort(EquipDataUDT.OPTION_2, equipData.getOption2())
-                .setShort(EquipDataUDT.OPTION_3, equipData.getOption3())
-                .setShort(EquipDataUDT.SOCKET_1, equipData.getSocket1())
-                .setShort(EquipDataUDT.SOCKET_2, equipData.getSocket2())
                 .setByte(EquipDataUDT.LEVEL_UP_TYPE, equipData.getLevelUpType())
                 .setByte(EquipDataUDT.LEVEL, equipData.getLevel())
                 .setInt(EquipDataUDT.EXP, equipData.getExp())

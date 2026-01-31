@@ -62,7 +62,7 @@ public final class ChannelServerNode extends ServerNode {
 
     // MIGRATION METHODS -----------------------------------------------------------------------------------------------
 
-    public void submitMigrationRequest(int accountId, int characterId, byte[] machineId, byte[] clientKey, Consumer<Optional<MigrationInfo>> consumer) {
+    public void submitMigrationRequest(int accountId, int characterId, Consumer<Optional<MigrationInfo>> consumer) {
         final CompletableFuture<Optional<MigrationInfo>> migrationRequestFuture = new CompletableFuture<>();
         migrationRequestFuture.thenAccept(consumer).exceptionally(e -> {
             log.error("Exception caught while processing migration request", e);
@@ -71,7 +71,7 @@ public final class ChannelServerNode extends ServerNode {
         });
         final int requestId = getNewRequestId();
         requestFutures.put(requestId, migrationRequestFuture);
-        centralClientFuture.channel().writeAndFlush(CentralPacket.migrateRequest(requestId, accountId, characterId, machineId, clientKey));
+        centralClientFuture.channel().writeAndFlush(CentralPacket.migrateRequest(requestId, accountId, characterId));
     }
 
     @SuppressWarnings("unchecked")

@@ -23,16 +23,16 @@ public final class NpcPool extends FieldObjectPool<Npc> {
         npc.setField(field);
         npc.setId(field.getNewObjectId());
         addObject(npc);
-        field.broadcastPacket(NpcPacket.npcEnterField(npc));
-        field.getUserPool().assignController(npc);
+        // field.broadcastPacket(NpcPacket.npcEnterField(npc));
+        // field.getUserPool().assignController(npc);
     }
 
     public boolean removeNpc(Npc npc) {
         if (!removeObject(npc)) {
             return false;
         }
-        field.broadcastPacket(NpcPacket.npcChangeController(npc, false));
-        field.broadcastPacket(NpcPacket.npcLeaveField(npc));
+//        field.broadcastPacket(NpcPacket.npcChangeController(npc, false));
+//        field.broadcastPacket(NpcPacket.npcLeaveField(npc));
         return true;
     }
 

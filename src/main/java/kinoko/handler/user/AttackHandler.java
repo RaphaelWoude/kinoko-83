@@ -40,9 +40,6 @@ import kinoko.world.job.explorer.Pirate;
 import kinoko.world.job.explorer.Thief;
 import kinoko.world.job.explorer.Warrior;
 import kinoko.world.job.legend.Aran;
-import kinoko.world.job.resistance.BattleMage;
-import kinoko.world.job.resistance.Mechanic;
-import kinoko.world.job.resistance.WildHunter;
 import kinoko.world.skill.Attack;
 import kinoko.world.skill.AttackInfo;
 import kinoko.world.skill.SkillConstants;
@@ -65,10 +62,6 @@ public final class AttackHandler {
         // CUserLocal::TryDoingMeleeAttack, CUserLocal::TryDoingNormalAttack
         final Attack attack = new Attack(OutHeader.UserMeleeAttack);
         final byte fieldKey = inPacket.decodeByte(); // bFieldKey
-        if (user.getFieldKey() != fieldKey) {
-            user.dispose();
-            return;
-        }
         if (inPacket.getRemaining() == 60) {
             inPacket.decodeByte(); // extra byte is sent when reactor is hit, no other way to detect this
         }
@@ -124,10 +117,6 @@ public final class AttackHandler {
         // CUserLocal::TryDoingShootAttack
         final Attack attack = new Attack(OutHeader.UserShootAttack);
         final byte fieldKey = inPacket.decodeByte(); // bFieldKey
-        if (user.getFieldKey() != fieldKey) {
-            user.dispose();
-            return;
-        }
         inPacket.decodeInt(); // ~pDrInfo.dr0
         inPacket.decodeInt(); // ~pDrInfo.dr1
         attack.mask = inPacket.decodeByte(); // nDamagePerMob | (16 * nMobCount)
@@ -165,9 +154,6 @@ public final class AttackHandler {
 
         attack.userX = inPacket.decodeShort(); // GetPos()->x
         attack.userY = inPacket.decodeShort(); // GetPos()->y
-        if (JobConstants.isWildHunterJob(user.getJob())) {
-            inPacket.decodeShort(); // ptBodyRelMove.y
-        }
         attack.ballStartX = inPacket.decodeShort(); // pt0.x
         attack.ballStartY = inPacket.decodeShort(); // pt0.y
         if (attack.skillId == ThunderBreaker.SPARK) {
@@ -182,10 +168,6 @@ public final class AttackHandler {
         // CUserLocal::TryDoingMagicAttack
         final Attack attack = new Attack(OutHeader.UserMagicAttack);
         final byte fieldKey = inPacket.decodeByte(); // bFieldKey
-        if (user.getFieldKey() != fieldKey) {
-            user.dispose();
-            return;
-        }
         inPacket.decodeInt(); // ~pDrInfo.dr0
         inPacket.decodeInt(); // ~pDrInfo.dr1
         attack.mask = inPacket.decodeByte(); // nDamagePerMob | (16 * nMobCount)
@@ -232,10 +214,6 @@ public final class AttackHandler {
         // CUserLocal::TryDoingBodyAttack
         final Attack attack = new Attack(OutHeader.UserBodyAttack);
         final byte fieldKey = inPacket.decodeByte(); // bFieldKey
-        if (user.getFieldKey() != fieldKey) {
-            user.dispose();
-            return;
-        }
         inPacket.decodeInt(); // ~pDrInfo.dr0
         inPacket.decodeInt(); // ~pDrInfo.dr1
         attack.mask = inPacket.decodeByte(); // nDamagePerMob | (16 * nMobCount)
@@ -315,18 +293,6 @@ public final class AttackHandler {
                 case Aran.OVER_SWING_DOUBLE_SWING, Aran.OVER_SWING_TRIPLE_SWING -> {
                     attack.slv = user.getSkillLevel(Aran.OVER_SWING);
                 }
-                case Mechanic.ENHANCED_FLAME_LAUNCHER -> {
-                    attack.slv = user.getSkillLevel(Mechanic.FLAME_LAUNCHER);
-                }
-                case Mechanic.ENHANCED_GATLING_GUN -> {
-                    attack.slv = user.getSkillLevel(Mechanic.GATLING_GUN);
-                }
-                case 35111008, 35111009, 35111010 -> {
-                    attack.slv = user.getSkillLevel(Mechanic.SATELLITE);
-                }
-                case 32001007, 32001008, 32001009, 32001010, 32001011 -> {
-                    attack.slv = user.getSkillLevel(BattleMage.THE_FINISHER);
-                }
             }
             if (attack.slv == 0) {
                 log.error("Tried to attack with skill {} not learned by user", attack.skillId);
@@ -396,16 +362,6 @@ public final class AttackHandler {
             }
         }
 
-        // Resolve swallow template ID
-        if (attack.skillId == WildHunter.JAGUAR_OSHI_ATTACK) {
-            if (!user.getSecondaryStat().hasOption(CharacterTemporaryStat.Swallow_Template)) {
-                log.error("Tried to attack with Jaguar-oshi without Swallow_Template CTS set");
-                return;
-            }
-            attack.swallowMobTemplateId = user.getSecondaryStat().getOption(CharacterTemporaryStat.Swallow_Template).nOption;
-            user.resetTemporaryStat(Set.of(CharacterTemporaryStat.Swallow_Mob, CharacterTemporaryStat.Swallow_Template));
-        }
-
         // Process skill
         if (attack.skillId != 0 && !SkillConstants.isNoConsumeAttack(attack.skillId)) {
             // Check skill cooltime and cost
@@ -444,11 +400,6 @@ public final class AttackHandler {
             }
             final int bulletCon = si.getBulletCon(attack.slv);
             if (bulletCon > 0) {
-                final int exJablinProp = user.getSkillStatValue(Thief.EXPERT_THROWING_STAR_HANDLING, SkillStat.prop);
-                final boolean exJablin = exJablinProp != 0 && Util.succeedProp(exJablinProp);
-                if (exJablin) {
-                    user.write(UserLocal.requestExJablin());
-                }
                 if (attack.bulletPosition != 0 && !attack.isSoulArrow() && !attack.isSpiritJavelin()) {
                     final int bulletCount = bulletCon * (attack.isShadowPartner() ? 2 : 1);
                     final Item bulletItem = user.getInventoryManager().getConsumeInventory().getItem(attack.bulletPosition);
@@ -456,19 +407,10 @@ public final class AttackHandler {
                         log.error("Tried to use skill {} without enough bullets", attack.skillId);
                         return;
                     }
-                    if (exJablin) {
-                        // Recharge 1 throwing star if possible
-                        final int slotMax = ItemProvider.getItemInfo(bulletItem.getItemId()).map(ItemInfo::getSlotMax).orElse(0);
-                        if (bulletItem.getQuantity() < slotMax) {
-                            bulletItem.setQuantity((short) (bulletItem.getQuantity() + 1));
-                            user.write(WvsContext.inventoryOperation(InventoryOperation.itemNumber(InventoryType.CONSUME, attack.bulletPosition, bulletItem.getQuantity()), false));
-                        }
-                        user.write(UserLocal.requestExJablin());
-                    } else {
-                        // Consume bullets
-                        bulletItem.setQuantity((short) (bulletItem.getQuantity() - bulletCount));
-                        user.write(WvsContext.inventoryOperation(InventoryOperation.itemNumber(InventoryType.CONSUME, attack.bulletPosition, bulletItem.getQuantity()), false));
-                    }
+
+                    // Consume bullets
+                    bulletItem.setQuantity((short) (bulletItem.getQuantity() - bulletCount));
+                    user.write(WvsContext.inventoryOperation(InventoryOperation.itemNumber(InventoryType.CONSUME, attack.bulletPosition, bulletItem.getQuantity()), false));
                 }
             }
             // Consume hp/mp
@@ -518,10 +460,6 @@ public final class AttackHandler {
                 // cannot absorb more than half of your max hp or more than the enemy's max hp
                 final int absorbAmount = totalDamage * user.getSkillStatValue(attack.skillId, SkillStat.x) / 100;
                 hpGain += Math.min(Math.min(absorbAmount, user.getMaxHp() / 2), mob.getMaxHp());
-            } else if (attack.skillId == WildHunter.SWIPE) {
-                // cannot absorb more than 15% of your max hp or more than the enemy's max hp
-                final int absorbAmount = totalDamage * user.getSkillStatValue(attack.skillId, SkillStat.x) / 100;
-                hpGain += Math.min(Math.min(absorbAmount, user.getMaxHp() * 15 / 100), mob.getMaxHp());
             } else if (attack.skillId == Pirate.ENERGY_DRAIN || attack.skillId == ThunderBreaker.ENERGY_DRAIN) {
                 hpGain += totalDamage * user.getSkillStatValue(attack.skillId, SkillStat.x) / 100;
             } else if (attack.skillId != 0) {

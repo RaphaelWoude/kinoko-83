@@ -11,10 +11,6 @@ import org.apache.logging.log4j.Logger;
 public final class ClientHandler {
     private static final Logger log = LogManager.getLogger(ClientHandler.class);
 
-    @Handler(InHeader.AliveAck)
-    public static void handleAliveAck(Client c, InPacket inPacket) {
-    }
-
     @Handler(InHeader.ExceptionLog)
     public static void handleExceptionLog(Client c, InPacket inPacket) {
         final String data = inPacket.decodeString();

@@ -21,6 +21,6 @@ public final class WzReaderTest {
 
     @Test
     public void testTamingMob() {
-        readWzFile("TamingMob_GMS_95.wz", WzConstants.WZ_GMS_IV);
+        readWzFile("TamingMob.wz", WzConstants.WZ_GMS_IV);
     }
 }

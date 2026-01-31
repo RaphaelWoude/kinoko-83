@@ -28,7 +28,6 @@ import kinoko.world.skill.SkillRecord;
 import kinoko.world.user.data.ConfigManager;
 import kinoko.world.user.data.MapTransferInfo;
 import kinoko.world.user.data.MiniGameRecord;
-import kinoko.world.user.data.WildHunterInfo;
 import kinoko.world.user.stat.CharacterStat;
 
 import java.net.InetSocketAddress;
@@ -148,7 +147,6 @@ public final class CassandraConnector implements DatabaseConnector {
             ConfigUDT.createUserDefinedType(cqlSession, DATABASE_KEYSPACE);
             MiniGameRecordUDT.createUserDefinedType(cqlSession, DATABASE_KEYSPACE);
             MapTransferInfoUDT.createUserDefinedType(cqlSession, DATABASE_KEYSPACE);
-            WildHunterInfoUDT.createUserDefinedType(cqlSession, DATABASE_KEYSPACE);
             CharacterStatUDT.createUserDefinedType(cqlSession, DATABASE_KEYSPACE);
             GuildMemberUDT.createUserDefinedType(cqlSession, DATABASE_KEYSPACE);
             GuildBoardCommentUDT.createUserDefinedType(cqlSession, DATABASE_KEYSPACE);
@@ -176,7 +174,6 @@ public final class CassandraConnector implements DatabaseConnector {
         registerCodec(cqlSession, ConfigUDT.getTypeName(), (ic) -> new ConfigCodec(ic, GenericType.of(ConfigManager.class)));
         registerCodec(cqlSession, MiniGameRecordUDT.getTypeName(), (ic) -> new MiniGameRecordCodec(ic, GenericType.of(MiniGameRecord.class)));
         registerCodec(cqlSession, MapTransferInfoUDT.getTypeName(), (ic) -> new MapTransferInfoCodec(ic, GenericType.of(MapTransferInfo.class)));
-        registerCodec(cqlSession, WildHunterInfoUDT.getTypeName(), (ic) -> new WildHunterInfoCodec(ic, GenericType.of(WildHunterInfo.class)));
         registerCodec(cqlSession, CharacterStatUDT.getTypeName(), (ic) -> new CharacterStatCodec(ic, GenericType.of(CharacterStat.class)));
         registerCodec(cqlSession, GuildMemberUDT.getTypeName(), (ic) -> new GuildMemberCodec(ic, GenericType.of(GuildMember.class)));
         registerCodec(cqlSession, GuildBoardCommentUDT.getTypeName(), (ic) -> new GuildBoardCommentCodec(ic, GenericType.of(GuildBoardComment.class)));

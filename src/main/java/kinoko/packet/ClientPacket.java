@@ -14,8 +14,4 @@ public final class ClientPacket {
         outPacket.encodeShort(channelPort);
         return outPacket;
     }
-
-    public static OutPacket aliveReq() {
-        return OutPacket.of(OutHeader.AliveReq);
-    }
 }

@@ -26,7 +26,6 @@ import kinoko.server.party.PartyRequest;
 import kinoko.util.BitFlag;
 import kinoko.world.GameConstants;
 import kinoko.world.field.Field;
-import kinoko.world.field.OpenGate;
 import kinoko.world.field.TownPortal;
 import kinoko.world.field.life.Life;
 import kinoko.world.field.summoned.Summoned;
@@ -40,7 +39,6 @@ import kinoko.world.skill.SkillManager;
 import kinoko.world.user.data.ConfigManager;
 import kinoko.world.user.data.MapTransferInfo;
 import kinoko.world.user.data.MiniGameRecord;
-import kinoko.world.user.data.WildHunterInfo;
 import kinoko.world.user.effect.Effect;
 import kinoko.world.user.friend.Friend;
 import kinoko.world.user.friend.FriendStatus;
@@ -49,9 +47,10 @@ import kinoko.world.user.stat.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
+
+import static org.reflections.Reflections.log;
 
 public final class User extends Life {
     private final Client client;
@@ -66,16 +65,13 @@ public final class User extends Life {
     private final List<Pet> pets = new ArrayList<>();
     private final Map<Integer, List<Summoned>> summoned = new HashMap<>(); // skill id -> list of summons
     private final Map<Integer, Instant> schedules = new HashMap<>();
-    private final AtomicInteger fieldKey = new AtomicInteger(0);
 
     private int messengerId;
     private PartyInfo partyInfo;
     private GuildInfo guildInfo;
 
     private Dialog dialog;
-    private Dragon dragon;
     private TownPortal townPortal;
-    private OpenGate openGate;
     private int effectItemId;
     private int portableChairId;
     private String adBoard;
@@ -152,10 +148,6 @@ public final class User extends Life {
         return characterData.getMapTransferInfo();
     }
 
-    public WildHunterInfo getWildHunterInfo() {
-        return characterData.getWildHunterInfo();
-    }
-
     public BasicStat getBasicStat() {
         return basicStat;
     }
@@ -194,14 +186,6 @@ public final class User extends Life {
 
     public void setSchedule(int skillId, Instant nextSchedule) {
         schedules.put(skillId, nextSchedule);
-    }
-
-    public byte getFieldKey() {
-        return (byte) (fieldKey.get() % 0xFF);
-    }
-
-    public byte getNextFieldKey() {
-        return (byte) (fieldKey.incrementAndGet() % 0xFF);
     }
 
     public int getMessengerId() {
@@ -288,14 +272,6 @@ public final class User extends Life {
         }
     }
 
-    public Dragon getDragon() {
-        return dragon;
-    }
-
-    public void setDragon(Dragon dragon) {
-        this.dragon = dragon;
-    }
-
     public TownPortal getTownPortal() {
         return townPortal;
     }
@@ -306,14 +282,6 @@ public final class User extends Life {
 
     public int getTownPortalIndex() {
         return hasParty() ? getPartyMemberIndex() - 1 : 0;
-    }
-
-    public OpenGate getOpenGate() {
-        return openGate;
-    }
-
-    public void setOpenGate(OpenGate openGate) {
-        this.openGate = openGate;
     }
 
     public int getEffectItemId() {
@@ -409,10 +377,13 @@ public final class User extends Life {
     }
 
     public void addExp(int exp) {
-        final Map<Stat, Object> addExpResult = getCharacterStat().addExp(exp, getBasicStat().getInt());
+        final Map<Stat, Object> addExpResult = getCharacterStat().addExp(exp);
         write(WvsContext.statChanged(addExpResult, false));
+
         // Level up
         if (addExpResult.containsKey(Stat.LEVEL)) {
+            final Map<Stat, Object> levelUpStatsResult = getCharacterStat().addLevelUpStats(exp);
+            write(WvsContext.statChanged(levelUpStatsResult, false));
             getField().broadcastPacket(UserRemote.effect(this, Effect.levelUp()), this);
             validateStat();
             setHp(getMaxHp());
@@ -661,17 +632,17 @@ public final class User extends Life {
         if (petIndex == 0) {
             getCharacterStat().setPetSn1(petSn);
             if (!isMigrate) {
-                write(WvsContext.statChanged(Stat.PETSN, petSn, false));
+                write(WvsContext.statChanged(Stat.PET, petSn, false));
             }
         } else if (petIndex == 1) {
             getCharacterStat().setPetSn2(petSn);
             if (!isMigrate) {
-                write(WvsContext.statChanged(Stat.PETSN2, petSn, false));
+                write(WvsContext.statChanged(Stat.PET, petSn, false));
             }
         } else if (petIndex == 2) {
             getCharacterStat().setPetSn3(petSn);
             if (!isMigrate) {
-                write(WvsContext.statChanged(Stat.PETSN3, petSn, false));
+                write(WvsContext.statChanged(Stat.PET, petSn, false));
             }
         }
     }
@@ -788,16 +759,22 @@ public final class User extends Life {
         getCharacterStat().setPosMap(destination.getFieldId());
         getCharacterStat().setPortal((byte) portalId);
         if (isMigrate) {
-            completeWarp(destination, true, isRevive);
+            completeMigrateWarp(destination);
         } else {
             ServerExecutor.submit(destination, () -> {
-                completeWarp(destination, false, isRevive);
+                completeWarp(destination, isRevive);
             });
         }
     }
 
-    private void completeWarp(Field destination, boolean isMigrate, boolean isRevive) {
-        write(StagePacket.setField(this, getChannelId(), isMigrate, isRevive));
+    private void completeMigrateWarp(Field destination) {
+        write(StagePacket.migrateToField(this, getChannelId()));
+        destination.addUser(this);
+        getConnectedServer().notifyUserUpdate(this);
+    }
+
+    private void completeWarp(Field destination, boolean isRevive) {
+        write(StagePacket.setField(this, getChannelId(), isRevive));
         destination.addUser(this);
         getConnectedServer().notifyUserUpdate(this);
     }
@@ -807,6 +784,7 @@ public final class User extends Life {
     }
 
     public void dispose() {
+        log.error("dispose");
         write(WvsContext.statChanged(Map.of(), true));
     }
 

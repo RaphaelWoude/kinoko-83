@@ -67,13 +67,11 @@ public final class CentralPacket {
         return outPacket;
     }
 
-    public static OutPacket migrateRequest(int requestId, int accountId, int characterId, byte[] machineId, byte[] clientKey) {
+    public static OutPacket migrateRequest(int requestId, int accountId, int characterId) {
         final OutPacket outPacket = OutPacket.of(CentralHeader.MigrateRequest);
         outPacket.encodeInt(requestId);
         outPacket.encodeInt(accountId);
         outPacket.encodeInt(characterId);
-        outPacket.encodeArray(machineId);
-        outPacket.encodeArray(clientKey);
         return outPacket;
     }
 

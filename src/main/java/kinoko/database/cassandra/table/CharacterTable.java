@@ -63,7 +63,6 @@ public final class CharacterTable {
                         .withColumn(POPULARITY_RECORD, DataTypes.frozenMapOf(DataTypes.INT, DataTypes.TIMESTAMP))
                         .withColumn(MINIGAME_RECORD, SchemaBuilder.udt(MiniGameRecordUDT.getTypeName(), true))
                         .withColumn(MAP_TRANSFER_INFO, SchemaBuilder.udt(MapTransferInfoUDT.getTypeName(), true))
-                        .withColumn(WILD_HUNTER_INFO, SchemaBuilder.udt(WildHunterInfoUDT.getTypeName(), true))
                         .withColumn(CONFIG, SchemaBuilder.udt(ConfigUDT.getTypeName(), true))
                         .withColumn(ITEM_SN_COUNTER, DataTypes.INT)
                         .withColumn(FRIEND_MAX, DataTypes.INT)

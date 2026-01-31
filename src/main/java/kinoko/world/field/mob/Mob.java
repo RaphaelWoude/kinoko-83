@@ -30,7 +30,6 @@ import kinoko.world.field.life.Life;
 import kinoko.world.item.Item;
 import kinoko.world.item.ItemVariationOption;
 import kinoko.world.job.explorer.Thief;
-import kinoko.world.job.resistance.WildHunter;
 import kinoko.world.quest.QuestRecord;
 import kinoko.world.user.User;
 import kinoko.world.user.stat.CharacterTemporaryStat;
@@ -574,7 +573,7 @@ public final class Mob extends Life implements ControlledObject, Encodable {
             final double multiplier = (owner.getSecondaryStat().getOption(CharacterTemporaryStat.ItemUpByItem).nOption + 100) / 100.0;
             probability = probability * multiplier;
         }
-        if (getMobStat().hasOption(MobTemporaryStat.Showdown) && getMobStat().getOption(MobTemporaryStat.Showdown).rOption != WildHunter.STINK_BOMB_SHOT) {
+        if (getMobStat().hasOption(MobTemporaryStat.Showdown)) {
             final double multiplier = (getMobStat().getOption(MobTemporaryStat.Showdown).nOption + 100) / 100.0;
             probability = probability * multiplier;
         }

@@ -2,8 +2,7 @@ package kinoko.handler.stage;
 
 import kinoko.database.DatabaseManager;
 import kinoko.handler.Handler;
-import kinoko.packet.stage.LoginPacket;
-import kinoko.packet.stage.LoginResultType;
+import kinoko.packet.stage.*;
 import kinoko.provider.EtcProvider;
 import kinoko.provider.ItemProvider;
 import kinoko.provider.SkillProvider;
@@ -35,10 +34,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.time.Instant;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class LoginHandler {
@@ -81,9 +77,7 @@ public final class LoginHandler {
             }
 
             c.setAccount(account);
-            c.setMachineId(machineId);
-            c.getServerNode().addClient(c);
-            c.write(LoginPacket.checkPasswordResultSuccess(account, c.getClientKey()));
+            c.write(LoginPacket.checkPasswordResultSuccess(account));
         });
     }
 
@@ -157,7 +151,7 @@ public final class LoginHandler {
     public static void handleCreateNewCharacter(Client c, InPacket inPacket) {
         final String name = inPacket.decodeString();
         final int selectedRace = inPacket.decodeInt();
-        final short selectedSubJob = inPacket.decodeShort();
+        // final short selectedSubJob = inPacket.decodeShort();
         final int[] selectedAL = new int[]{
                 inPacket.decodeInt(), // face
                 inPacket.decodeInt(), // hair
@@ -168,7 +162,11 @@ public final class LoginHandler {
                 inPacket.decodeInt(), // shoes
                 inPacket.decodeInt(), // weapon
         };
+        System.out.println(name);
+        System.out.println(selectedRace);
+        System.out.println(Arrays.toString(selectedAL));
         final byte gender = inPacket.decodeByte();
+        System.out.println(gender);
 
         // Validate character
         if (!GameConstants.isValidCharacterName(name) || EtcProvider.isForbiddenName(name)) {
@@ -188,11 +186,6 @@ public final class LoginHandler {
         }
         final RaceSelect raceSelect = raceSelectResult.get();
         final Job job = raceSelect.getJob();
-        if (selectedSubJob != 0 && job != Job.BEGINNER) {
-            log.error("Tried to create a character with job : {} and sub job : {}", job, selectedSubJob);
-            c.close();
-            return;
-        }
         for (int i = 0; i < selectedAL.length; i++) {
             if (!EtcProvider.isValidStartingItem(i, selectedAL[i])) {
                 log.error("Tried to create a character with an invalid starting item : {}", selectedAL[i]);
@@ -229,7 +222,6 @@ public final class LoginHandler {
         cs.setHair(selectedAL[1] + selectedAL[2]);
         cs.setLevel(level);
         cs.setJob(job.getJobId());
-        cs.setSubJob(selectedSubJob);
         cs.setBaseStr((short) 12);
         cs.setBaseDex((short) 5);
         cs.setBaseInt((short) 4);
@@ -242,7 +234,7 @@ public final class LoginHandler {
         cs.setSp(ExtendSp.from(Map.of()));
         cs.setExp(0);
         cs.setPop((short) 0);
-        cs.setPosMap(GameConstants.getStartingMap(job, selectedSubJob));
+        cs.setPosMap(0);
         cs.setPortal((byte) 0);
         characterData.setCharacterStat(cs);
 
@@ -323,10 +315,6 @@ public final class LoginHandler {
         // Initialize Map Transfer Info
         final MapTransferInfo mti = new MapTransferInfo();
         characterData.setMapTransferInfo(mti);
-
-        // Initialize Wild Hunter Info
-        final WildHunterInfo whi = new WildHunterInfo();
-        characterData.setWildHunterInfo(whi);
 
         // Initialize Friend Max Count
         characterData.setFriendMax(ServerConfig.FRIEND_MAX_BASE);
@@ -423,13 +411,6 @@ public final class LoginHandler {
     }
 
     private static void handleMigration(Client c, Account account, int characterId) {
-        // Check that client requirements are set
-        if (c.getMachineId() == null || c.getMachineId().length != 16 || c.getClientKey() == null || c.getClientKey().length != 8) {
-            log.error("Tried to submit migration request without client requirements for character ID : {}", characterId);
-            c.write(LoginPacket.selectCharacterResultFail(LoginResultType.Unknown));
-            return;
-        }
-
         // Resolve target channel
         final int targetChannelId = account.getChannelId();
         final LoginServerNode loginServerNode = (LoginServerNode) c.getServerNode();
@@ -441,7 +422,7 @@ public final class LoginHandler {
         }
 
         // Create and submit migration request
-        final MigrationInfo migrationInfo = MigrationInfo.from(targetChannelId, account.getId(), characterId, c.getMachineId(), c.getClientKey());
+        final MigrationInfo migrationInfo = MigrationInfo.from(targetChannelId, account.getId(), characterId);
         loginServerNode.submitLoginRequest(migrationInfo, (transferResult) -> {
             if (transferResult.isEmpty()) {
                 log.error("Failed to submit migration request for character ID : {}", characterId);
@@ -451,5 +432,84 @@ public final class LoginHandler {
             final TransferInfo transferInfo = transferResult.get();
             c.write(LoginPacket.selectCharacterResultSuccess(transferInfo.getChannelHost(), transferInfo.getChannelPort(), characterId));
         });
+    }
+
+    @Handler(InHeader.CheckPinCode)
+    public static void handleCheckPinCode(Client c, InPacket inPacket) {
+        final byte pinCodeModalOpt = inPacket.decodeByte();
+        if (pinCodeModalOpt == PinCodeModalOpt.CANCEL.getValue()) {
+            c.write(LoginPacket.checkPinCodeResult(CheckPinCodeResultType.Cancel));
+            return;
+        }
+
+        final byte pinCodeAttemptMaxCount = 5;
+
+        final boolean pinCodeShouldRegisterOrEnterInLoginOpt = inPacket.decodeBoolean();
+
+        final String inputPinCode = inPacket.decodeString();
+        if (pinCodeModalOpt == PinCodeModalOpt.LOGIN.getValue()) {
+            final Optional<String> pinCodeOptional = DatabaseManager.accountAccessor().getPinCode(c.getAccount().getId());
+            if (pinCodeShouldRegisterOrEnterInLoginOpt) {
+                if (pinCodeOptional.isEmpty() || pinCodeOptional.get().isBlank()) {
+                    c.write(LoginPacket.checkPinCodeResult(CheckPinCodeResultType.CreateOrUpdate));
+                } else {
+                    c.write(LoginPacket.checkPinCodeResult(CheckPinCodeResultType.RequestToEnter));
+                }
+            } else {
+                if (pinCodeOptional.isEmpty() || pinCodeOptional.get().isBlank()) {
+                    c.write(LoginPacket.checkPinCodeResult(CheckPinCodeResultType.CreateOrUpdate));
+                } else {
+                    if (inputPinCode.equals(pinCodeOptional.get())) {
+                        c.setPinCodeAttemptCount(0);
+                        c.getServerNode().addClient(c);
+                        c.write(LoginPacket.checkPinCodeResult(CheckPinCodeResultType.Done));
+                    } else {
+                        final int pinCodeAttemptCount = c.getPinCodeAttemptCount();
+                        if (pinCodeAttemptCount >= pinCodeAttemptMaxCount) {
+                            c.write(LoginPacket.checkPinCodeResult(CheckPinCodeResultType.CheckTooMuchInvalid));
+                        } else {
+                            c.setPinCodeAttemptCount(pinCodeAttemptCount + 1);
+                            c.write(LoginPacket.checkPinCodeResult(CheckPinCodeResultType.CheckInvalid));
+                        }
+                    }
+                }
+            }
+        } else if (pinCodeModalOpt == PinCodeModalOpt.CHANGE_PIN.getValue()) {
+            final Optional<String> pinCodeOptional = DatabaseManager.accountAccessor().getPinCode(c.getAccount().getId());
+            if (pinCodeOptional.isPresent() && inputPinCode.equals(pinCodeOptional.get())) {
+                c.setPinCodeAttemptCount(0);
+                c.write(LoginPacket.checkPinCodeResult(CheckPinCodeResultType.CreateOrUpdate));
+            } else {
+                final int pinCodeAttemptCount = c.getPinCodeAttemptCount();
+                if (pinCodeAttemptCount >= pinCodeAttemptMaxCount) {
+                    c.write(LoginPacket.checkPinCodeResult(CheckPinCodeResultType.CheckTooMuchInvalid));
+                } else {
+                    c.setPinCodeAttemptCount(pinCodeAttemptCount + 1);
+                    c.write(LoginPacket.checkPinCodeResult(CheckPinCodeResultType.CheckInvalid));
+                }
+            }
+        }
+    }
+
+    @Handler(InHeader.UpdatePinCode)
+    public static void handleUpdatePinCode(Client c, InPacket inPacket) {
+//        void __thiscall CLogin::OnUpdatePinCodeResult(CLogin *this, CInPacket *iPacket)
+//        {
+//            if ( CInPacket::Decode1(iPacket) )
+//                CLoginUtilDlg::Error(15, 0);
+//            else
+//                CPinCodeDlg::Notice(8);
+//            CUITitle::EnableLoginCtrl((CUITitle *)TSingleton<CUITitle>::ms_pInstance._m_pStr, 1);
+//        }
+        final byte pinCodeUpdateModalOpt = inPacket.decodeByte();
+        boolean hasErrorInUpdate = false;
+        if (pinCodeUpdateModalOpt == PinCodeUpdateModalOpt.CANCEL.getValue()) {
+            // If the user clicks the cancel button, then also set hasErrorInUpdate to true.
+            hasErrorInUpdate = true;
+        } else {
+            final String pinCode = inPacket.decodeString();
+            hasErrorInUpdate = !DatabaseManager.accountAccessor().savePinCode(c.getAccount().getId(), pinCode);
+        }
+        c.write(LoginPacket.updatePinCodeResult(hasErrorInUpdate));
     }
 }

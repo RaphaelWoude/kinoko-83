@@ -1,6 +1,5 @@
 package kinoko.server.command;
 
-import kinoko.packet.user.DragonPacket;
 import kinoko.packet.user.UserLocal;
 import kinoko.packet.user.UserRemote;
 import kinoko.packet.world.MessagePacket;
@@ -43,7 +42,6 @@ import kinoko.world.quest.QuestState;
 import kinoko.world.skill.SkillConstants;
 import kinoko.world.skill.SkillManager;
 import kinoko.world.skill.SkillRecord;
-import kinoko.world.user.Dragon;
 import kinoko.world.user.User;
 import kinoko.world.user.effect.Effect;
 import kinoko.world.user.stat.*;
@@ -611,13 +609,8 @@ public final class AdminCommands {
                 statMap.put(Stat.AP, cs.getAp());
             }
             case "sp" -> {
-                if (JobConstants.isExtendSpJob(cs.getJob())) {
-                    cs.getSp().setSp(JobConstants.getJobLevel(cs.getJob()), value);
-                    statMap.put(Stat.SP, cs.getSp());
-                } else {
-                    cs.getSp().setNonExtendSp(value);
-                    statMap.put(Stat.SP, (short) cs.getSp().getNonExtendSp());
-                }
+                cs.getSp().setNonExtendSp(value);
+                statMap.put(Stat.SP, (short) cs.getSp().getNonExtendSp());
             }
             default -> {
                 user.write(MessagePacket.system("Syntax : %sstat hp/mp/str/dex/int/luk/ap/sp <new value>", ServerConfig.COMMAND_PREFIX));
@@ -720,17 +713,6 @@ public final class AdminCommands {
         user.updatePassiveSkillData();
         user.validateStat();
         user.write(WvsContext.changeSkillRecordResult(skillRecords, true));
-        // Additional handling
-        if (JobConstants.isDragonJob(jobId)) {
-            final Dragon dragon = new Dragon(user.getJob());
-            user.setDragon(dragon);
-            user.getField().broadcastPacket(DragonPacket.dragonEnterField(user, dragon));
-        } else {
-            user.setDragon(null);
-        }
-        if (JobConstants.isWildHunterJob(jobId)) {
-            user.write(WvsContext.wildHunterInfo(user.getWildHunterInfo()));
-        }
         user.getConnectedServer().notifyUserUpdate(user);
     }
 
@@ -892,14 +874,6 @@ public final class AdminCommands {
         user.write(MessagePacket.system("Battleship HP : %d", Pirate.getBattleshipDurability(user)));
     }
 
-    @Command("jaguar")
-    @Arguments("index")
-    public static void jaguar(User user, String[] args) {
-        final int index = Integer.parseInt(args[1]);
-        user.getWildHunterInfo().setRidingType(index);
-        user.write(WvsContext.wildHunterInfo(user.getWildHunterInfo()));
-    }
-
     @Command("cd")
     public static void cd(User user, String[] args) {
         final var iter = user.getSkillManager().getSkillCooltimes().keySet().iterator();
@@ -915,10 +889,10 @@ public final class AdminCommands {
         // Set stats
         final CharacterStat cs = user.getCharacterStat();
         cs.setLevel((short) 200);
-//            cs.setBaseStr((short) 10000);
-//            cs.setBaseDex((short) 10000);
-//            cs.setBaseInt((short) 10000);
-//            cs.setBaseLuk((short) 10000);
+        cs.setBaseStr((short) 10000);
+        cs.setBaseDex((short) 10000);
+        cs.setBaseInt((short) 10000);
+        cs.setBaseLuk((short) 10000);
         cs.setMaxHp(50000);
         cs.setMaxMp(50000);
         cs.setExp(0);

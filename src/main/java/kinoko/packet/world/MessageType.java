@@ -7,16 +7,16 @@ public enum MessageType {
     CashItemExpire(2),
     IncEXP(3),
     IncSP(4),
-    IncPOP(5),
-    IncMoney(6),
-    IncGP(7),
-    GiveBuff(8),
-    GeneralItemExpire(9),
-    System(10),
-    QuestRecordEx(11),
-    ItemProtectExpire(12),
-    ItemExpireReplace(13),
-    SkillExpire(14);
+    // IncPOP(5),
+    IncMoney(5),
+    IncGP(6),
+    GiveBuff(7),
+    GeneralItemExpire(8),
+    System(9),
+    QuestRecordEx(10),
+    ItemProtectExpire(11),
+    ItemExpireReplace(12),
+    SkillExpire(13);
 
     private final byte value;
 

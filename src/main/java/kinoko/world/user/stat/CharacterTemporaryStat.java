@@ -115,11 +115,6 @@ public enum CharacterTemporaryStat implements BitIndex {
     Conversion(106),
     Revive(107),
     Sneak(108),
-    Mechanic(109),
-    Aura(110),
-    DarkAura(111),
-    BlueAura(112),
-    YellowAura(113),
     SuperBody(114),
     MorewildMaxHP(115),
     Dice(116),
@@ -160,7 +155,7 @@ public enum CharacterTemporaryStat implements BitIndex {
             ExpBuffRate, IncEffectHPPotion, IncEffectMPPotion, StopPortion, StopMotion, Fear, EvanSlow, MagicShield,
             MagicResistance, SoulStone, Flying, Frozen, AssistCharge, Enrage, SuddenDeath, NotDamaged, FinalCut,
             ThornsEffect, SwallowAttackDamage, MorewildDamageUp, Mine, Cyclone, SwallowCritical, SwallowMaxMP,
-            SwallowDefence, SwallowEvasion, Conversion, Revive, Sneak, Mechanic, Aura, DarkAura, BlueAura, YellowAura,
+            SwallowDefence, SwallowEvasion, Conversion, Revive, Sneak,
             SuperBody, MorewildMaxHP, Dice, BlessingArmor, DamR, TeleportMasteryOn, CombatOrders, Beholder, SummonBomb
     );
     public static final List<CharacterTemporaryStat> REMOTE_ENCODE_ORDER = List.of(
@@ -168,20 +163,20 @@ public enum CharacterTemporaryStat implements BitIndex {
             SoulArrow, Morph, Ghost, Attract, SpiritJavelin, BanMap, Barrier, DojangShield, ReverseInput,
             RespectPImmune, RespectMImmune, DefenseAtt, DefenseState, DojangBerserk, DojangInvincible, WindWalk,
             RepeatEffect, StopPortion, StopMotion, Fear, MagicShield, Flying, Frozen, SuddenDeath, FinalCut, Cyclone,
-            Sneak, MorewildDamageUp, Mechanic, DarkAura, BlueAura, YellowAura, BlessingArmor
+            Sneak, MorewildDamageUp, BlessingArmor
     );
     public static final List<CharacterTemporaryStat> TWO_STATE_ORDER = List.of(
             EnergyCharged, Dash_Speed, Dash_Jump, RideVehicle, PartyBooster, GuidedBullet, Undead
     );
     public static final Set<CharacterTemporaryStat> AURA_STAT = Set.of(
-            DarkAura, BlueAura, YellowAura, SuperBody
+            SuperBody
     );
     public static final Set<CharacterTemporaryStat> SWALLOW_BUFF_STAT = Set.of(
             SwallowAttackDamage, SwallowDefence, SwallowCritical, SwallowMaxMP, SwallowEvasion
     );
     public static final Set<CharacterTemporaryStat> MOVEMENT_AFFECTING_STAT = Set.of(
             Speed, Jump, Stun, Weakness, Slow, Morph, Ghost, BasicStatUp, Attract, RideVehicle, Dash_Speed, Dash_Jump,
-            Flying, Frozen, YellowAura
+            Flying, Frozen
     );
 
     private final int value;

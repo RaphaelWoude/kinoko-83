@@ -135,9 +135,7 @@ public final class CentralServerHandler extends SimpleChannelInboundHandler<InPa
         final int requestId = inPacket.decodeInt();
         final int accountId = inPacket.decodeInt();
         final int characterId = inPacket.decodeInt();
-        final byte[] machineId = inPacket.decodeArray(16);
-        final byte[] clientKey = inPacket.decodeArray(8);
-        final Optional<MigrationInfo> migrationResult = centralServerNode.completeMigrationRequest(remoteServerNode.getChannelId(), accountId, characterId, machineId, clientKey);
+        final Optional<MigrationInfo> migrationResult = centralServerNode.completeMigrationRequest(remoteServerNode.getChannelId(), accountId, characterId);
         remoteServerNode.write(CentralPacket.migrateResult(requestId, migrationResult.orElse(null)));
     }
 

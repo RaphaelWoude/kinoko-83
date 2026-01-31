@@ -54,17 +54,15 @@ public final class MessagePacket {
         outPacket.encodeInt(0); // nItemBonusEXP
         outPacket.encodeInt(0); // nPremiumIPEXP
         outPacket.encodeInt(0); // nRainbowWeekEventEXP
-        outPacket.encodeInt(0); // nPartyEXPRingEXP
-        outPacket.encodeInt(0); // nCakePieEventBonus
         return outPacket;
     }
 
-    public static OutPacket incPop(int pop) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.Message);
-        outPacket.encodeByte(MessageType.IncPOP.getValue());
-        outPacket.encodeInt(pop);
-        return outPacket;
-    }
+//    public static OutPacket incPop(int pop) {
+//        final OutPacket outPacket = OutPacket.of(OutHeader.Message);
+//        outPacket.encodeByte(MessageType.IncPOP.getValue());
+//        outPacket.encodeInt(pop);
+//        return outPacket;
+//    }
 
     public static OutPacket incMoney(int money) {
         final OutPacket outPacket = OutPacket.of(OutHeader.Message);

@@ -19,10 +19,10 @@ public final class MigrationStorage {
         return true;
     }
 
-    public synchronized Optional<MigrationInfo> completeMigrationRequest(int channelId, int accountId, int characterId, byte[] machineId, byte[] clientKey) {
+    public synchronized Optional<MigrationInfo> completeMigrationRequest(int channelId, int accountId, int characterId) {
         final MigrationInfo existingInfo = migrationInfos.get(accountId);
         if (existingInfo == null || existingInfo.isExpired() ||
-                !existingInfo.verify(channelId, accountId, characterId, machineId, clientKey)) {
+                !existingInfo.verify(channelId, accountId, characterId)) {
             return Optional.empty();
         }
         migrationInfos.remove(accountId);

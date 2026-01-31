@@ -69,24 +69,7 @@ public enum BodyPart {
 
     CASH_BASE(100), // -100 when encoding
     CASH_WEAPON(111), // STICKER
-    CASH_END(160),
-
-    // DP
-    DRAGON_BASE(1000),
-    DRAGON_MASK(1000),
-    DRAGON_PENDANT(1001),
-    DRAGON_WING(1002),
-    DRAGON_TAIL(1003),
-    DRAGON_END(1100),
-
-    // MP
-    MECHANIC_BASE(1100),
-    MECHANIC_ENGINE(1100),
-    MECHANIC_ARM(1101),
-    MECHANIC_LEG(1102),
-    MECHANIC_FRAME(1103),
-    MECHANIC_TRANSISTOR(1104),
-    MECHANIC_END(1200);
+    CASH_END(160);
 
     private static final Map<Integer, BodyPart> bodyParts;
     private static final Set<BodyPart> armorBodyParts = Set.of(CAP, CLOTHES, PANTS, SHOES, GLOVES, CAPE);
@@ -111,10 +94,6 @@ public enum BodyPart {
                 case EQUIPPED_END:
                 case CASH_BASE:
                 case CASH_END:
-                case DRAGON_BASE:
-                case DRAGON_END:
-                case MECHANIC_BASE:
-                case MECHANIC_END:
                     continue;
             }
             bodyPartMap.put(bodyPart.getValue(), bodyPart);
@@ -138,14 +117,6 @@ public enum BodyPart {
 
     public final boolean isAccessory() {
         return accessoryBodyParts.contains(this);
-    }
-
-    public final boolean isDragon() {
-        return getValue() >= DRAGON_BASE.getValue() && getValue() < DRAGON_END.getValue();
-    }
-
-    public final boolean isMechanic() {
-        return getValue() >= MECHANIC_BASE.getValue() && getValue() < MECHANIC_END.getValue();
     }
 
     public static BodyPart getByValue(int value) {
@@ -207,21 +178,6 @@ public enum BodyPart {
             case 115 -> {
                 return Set.of(SHOULDER);
             }
-            case 161 -> {
-                return Set.of(MECHANIC_ENGINE);
-            }
-            case 162 -> {
-                return Set.of(MECHANIC_ARM);
-            }
-            case 163 -> {
-                return Set.of(MECHANIC_LEG);
-            }
-            case 164 -> {
-                return Set.of(MECHANIC_FRAME);
-            }
-            case 165 -> {
-                return Set.of(MECHANIC_TRANSISTOR);
-            }
             case 180 -> {
                 if (itemId == 1802100) {
                     return Set.of(PETRING_LABEL, PETRING_LABEL2, PETRING_LABEL3);
@@ -274,18 +230,6 @@ public enum BodyPart {
             }
             case 192 -> {
                 return Set.of(MOBEQUIP);
-            }
-            case 194 -> {
-                return Set.of(DRAGON_MASK);
-            }
-            case 195 -> {
-                return Set.of(DRAGON_PENDANT);
-            }
-            case 196 -> {
-                return Set.of(DRAGON_WING);
-            }
-            case 197 -> {
-                return Set.of(DRAGON_TAIL);
             }
             default -> {
                 if (!ItemConstants.isWeapon(itemId)) {

@@ -94,9 +94,6 @@ public final class CassandraCharacterAccessor extends CassandraAccessor implemen
         final MapTransferInfo mti = row.get(CharacterTable.MAP_TRANSFER_INFO, MapTransferInfo.class);
         cd.setMapTransferInfo(mti);
 
-        final WildHunterInfo whi = row.get(CharacterTable.WILD_HUNTER_INFO, WildHunterInfo.class);
-        cd.setWildHunterInfo(whi);
-
         cd.setItemSnCounter(new AtomicInteger(row.getInt(CharacterTable.ITEM_SN_COUNTER)));
         cd.setFriendMax(row.getInt(CharacterTable.FRIEND_MAX));
         cd.setPartyId(row.getInt(CharacterTable.PARTY_ID));
@@ -244,7 +241,6 @@ public final class CassandraCharacterAccessor extends CassandraAccessor implemen
                         .setColumn(CharacterTable.POPULARITY_RECORD, literal(characterData.getPopularityRecord().getRecords(), registry))
                         .setColumn(CharacterTable.MINIGAME_RECORD, literal(characterData.getMiniGameRecord(), registry))
                         .setColumn(CharacterTable.MAP_TRANSFER_INFO, literal(characterData.getMapTransferInfo(), registry))
-                        .setColumn(CharacterTable.WILD_HUNTER_INFO, literal(characterData.getWildHunterInfo(), registry))
                         .setColumn(CharacterTable.ITEM_SN_COUNTER, literal(characterData.getItemSnCounter().get()))
                         .setColumn(CharacterTable.FRIEND_MAX, literal(characterData.getFriendMax()))
                         .setColumn(CharacterTable.PARTY_ID, literal(characterData.getPartyId()))

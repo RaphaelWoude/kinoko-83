@@ -15,7 +15,6 @@ import kinoko.world.field.summoned.Summoned;
 import kinoko.world.field.summoned.SummonedActionType;
 import kinoko.world.field.summoned.SummonedLeaveType;
 import kinoko.world.job.explorer.Warrior;
-import kinoko.world.job.resistance.Mechanic;
 import kinoko.world.skill.*;
 import kinoko.world.user.User;
 import kinoko.world.user.stat.CharacterTemporaryStat;
@@ -24,7 +23,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.Set;
 
 public final class SummonedHandler {
     private static final Logger log = LogManager.getLogger(SummonedHandler.class);
@@ -223,16 +221,5 @@ public final class SummonedHandler {
 
         // Remove summoned
         user.removeSummoned(summoned);
-
-        // There is no way to differentiate between the user removing the satellite summon manually and the buff
-        // from Satellite Safety (35121006) removing the summon after absorbing damage.
-        if (summoned.getSkillId() == Mechanic.SATELLITE ||
-                summoned.getSkillId() == Mechanic.SATELLITE_2 ||
-                summoned.getSkillId() == Mechanic.SATELLITE_3) {
-            if (user.getSecondaryStat().hasOption(CharacterTemporaryStat.SafetyDamage)) {
-                user.resetTemporaryStat(Set.of(CharacterTemporaryStat.SafetyDamage, CharacterTemporaryStat.SafetyAbsorb));
-                user.setSkillCooltime(Mechanic.SATELLITE_SAFETY, user.getSkillStatValue(Mechanic.SATELLITE_SAFETY, SkillStat.cooltime));
-            }
-        }
     }
 }

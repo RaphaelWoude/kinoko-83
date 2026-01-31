@@ -15,7 +15,6 @@ import kinoko.server.packet.InPacket;
 import kinoko.server.packet.OutPacket;
 import kinoko.server.user.RemoteUser;
 import kinoko.util.Util;
-import kinoko.world.job.resistance.BattleMage;
 import kinoko.world.user.GuildInfo;
 import kinoko.world.user.PartyInfo;
 import kinoko.world.user.User;
@@ -189,9 +188,6 @@ public final class ChannelServerHandler extends SimpleChannelInboundHandler<InPa
         ServerExecutor.submit(target, () -> {
             // Cancel party aura
             target.resetTemporaryStat(CharacterTemporaryStat.AURA_STAT);
-            if (target.getSecondaryStat().hasOption(CharacterTemporaryStat.Aura)) {
-                BattleMage.cancelPartyAura(target, target.getSecondaryStat().getOption(CharacterTemporaryStat.Aura).rOption);
-            }
             // Set party info and update members
             target.setPartyInfo(partyInfo);
             target.getField().getUserPool().forEachPartyMember(target, (member) -> {

@@ -31,13 +31,6 @@ public final class EquipData {
     private int iuc; // Increase Upgrade Count
     private byte chuc; // Current Hyper Upgrade Count
 
-    private byte grade;
-    private short option1;
-    private short option2;
-    private short option3;
-    private short socket1;
-    private short socket2;
-
     private byte levelUpType;
     private byte level;
     private int exp;
@@ -68,13 +61,6 @@ public final class EquipData {
         this.iuc = equipData.iuc;
         this.chuc = equipData.chuc;
 
-        this.grade = equipData.grade;
-        this.option1 = equipData.option1;
-        this.option2 = equipData.option2;
-        this.option3 = equipData.option3;
-        this.socket1 = equipData.socket1;
-        this.socket2 = equipData.socket2;
-
         this.levelUpType = equipData.levelUpType;
         this.level = equipData.level;
         this.exp = equipData.exp;
@@ -100,31 +86,23 @@ public final class EquipData {
         outPacket.encodeShort(getIncCraft()); // iCraft
         outPacket.encodeShort(getIncSpeed()); // iSpeed
         outPacket.encodeShort(getIncJump()); // iJump
-
         outPacket.encodeString(item.getTitle()); // sTitle
-
         outPacket.encodeShort(item.getAttribute()); // nAttribute
-        outPacket.encodeByte(getLevelUpType()); // nLevelUpType
-        outPacket.encodeByte(getLevel()); // nLevel
-        outPacket.encodeInt(getExp()); // nEXP
-        outPacket.encodeInt(getDurability()); // nDurability
 
-        outPacket.encodeInt(getIuc()); // nIUC
-        outPacket.encodeByte(getGrade()); // nGrade
-        outPacket.encodeByte(getChuc()); // nCHUC
-
-        outPacket.encodeShort(getOption1()); // nOption1
-        outPacket.encodeShort(getOption2()); // nOption2
-        outPacket.encodeShort(getOption3()); // nOption3
-        outPacket.encodeShort(getSocket1()); // nSocket1
-        outPacket.encodeShort(getSocket2()); // nSocket2
-
-        if (!item.isCash()) {
-            outPacket.encodeLong(item.getItemSn()); // liSN
+        if (item.isCash()) {
+            for (int i = 0; i < 10; i++) {
+                outPacket.encodeByte(0x40);
+            }
+        } else {
+            outPacket.encodeByte(0);
+            outPacket.encodeByte(getLevel());
+            outPacket.encodeInt(getExp());
+            outPacket.encodeInt(getDurability());
+            outPacket.encodeLong(0);
         }
 
         outPacket.encodeFT(FileTime.ZERO_TIME); // ftEquipped
-        outPacket.encodeInt(0); // nPrevBonusExpRate
+        outPacket.encodeInt(-1); // nPrevBonusExpRate
     }
 
     public short getIncStr() {
@@ -279,54 +257,6 @@ public final class EquipData {
         this.chuc = chuc;
     }
 
-    public byte getGrade() {
-        return grade;
-    }
-
-    public void setGrade(byte grade) {
-        this.grade = grade;
-    }
-
-    public short getOption1() {
-        return option1;
-    }
-
-    public void setOption1(short option1) {
-        this.option1 = option1;
-    }
-
-    public short getOption2() {
-        return option2;
-    }
-
-    public void setOption2(short option2) {
-        this.option2 = option2;
-    }
-
-    public short getOption3() {
-        return option3;
-    }
-
-    public void setOption3(short option3) {
-        this.option3 = option3;
-    }
-
-    public short getSocket1() {
-        return socket1;
-    }
-
-    public void setSocket1(short socket1) {
-        this.socket1 = socket1;
-    }
-
-    public short getSocket2() {
-        return socket2;
-    }
-
-    public void setSocket2(short socket2) {
-        this.socket2 = socket2;
-    }
-
     public byte getLevelUpType() {
         return levelUpType;
     }
@@ -361,19 +291,6 @@ public final class EquipData {
 
 
     // HELPER METHODS --------------------------------------------------------------------------------------------------
-
-    public ItemGrade getItemGrade() {
-        return switch (getGrade() & 0x3) {
-            case 1 -> ItemGrade.RARE;
-            case 2 -> ItemGrade.EPIC;
-            case 3 -> ItemGrade.UNIQUE;
-            default -> ItemGrade.NORMAL;
-        };
-    }
-
-    public boolean isReleased() {
-        return (getGrade() & ItemGrade.RELEASED.getValue()) != 0;
-    }
 
     public void applyScrollStats(Map<ItemInfoType, Object> scrollStats) {
         for (var entry : scrollStats.entrySet()) {
@@ -425,42 +342,6 @@ public final class EquipData {
                     setIncJump((short) Math.clamp(getIncJump() + value, 0, Short.MAX_VALUE));
                 }
             }
-        }
-    }
-
-    public void applyHyperUpgradeStats(ItemInfo itemInfo) {
-        // Inaccurate formula, official version randomly added non-existing stats - might have also used req level
-        if (getIncStr() > 0) {
-            final int inc = 1 + (getIncStr() / 50) + Util.getRandom(0, ItemConstants.EQUIP_ENHANCEMENT_STAT_BASE);
-            setIncStr((short) Math.clamp(getIncStr() + inc, 0, Short.MAX_VALUE));
-        }
-        if (getIncDex() > 0) {
-            final int inc = 1 + (getIncDex() / 50) + Util.getRandom(0, ItemConstants.EQUIP_ENHANCEMENT_STAT_BASE);
-            setIncDex((short) Math.clamp(getIncDex() + inc, 0, Short.MAX_VALUE));
-        }
-        if (getIncInt() > 0) {
-            final int inc = 1 + (getIncInt() / 50) + Util.getRandom(0, ItemConstants.EQUIP_ENHANCEMENT_STAT_BASE);
-            setIncInt((short) Math.clamp(getIncInt() + inc, 0, Short.MAX_VALUE));
-        }
-        if (getIncLuk() > 0) {
-            final int inc = 1 + (getIncLuk() / 50) + Util.getRandom(0, ItemConstants.EQUIP_ENHANCEMENT_STAT_BASE);
-            setIncLuk((short) Math.clamp(getIncLuk() + inc, 0, Short.MAX_VALUE));
-        }
-        if (getIncPad() > 0) {
-            final int inc = 1 + (getIncPad() / 50) + Util.getRandom(0, ItemConstants.EQUIP_ENHANCEMENT_ATT_BASE);
-            setIncPad((short) Math.clamp(getIncPad() + inc, 0, Short.MAX_VALUE));
-        }
-        if (getIncMad() > 0) {
-            final int inc = 1 + (getIncMad() / 50) + Util.getRandom(0, ItemConstants.EQUIP_ENHANCEMENT_ATT_BASE);
-            setIncMad((short) Math.clamp(getIncMad() + inc, 0, Short.MAX_VALUE));
-        }
-        if (getIncPdd() > 0) {
-            final int inc = 1 + (getIncPdd() / 50) + Util.getRandom(0, ItemConstants.EQUIP_ENHANCEMENT_DEF_BASE);
-            setIncPdd((short) Math.clamp(getIncPdd() + inc, 0, Short.MAX_VALUE));
-        }
-        if (getIncMdd() > 0) {
-            final int inc = 1 + (getIncMdd() / 50) + Util.getRandom(0, ItemConstants.EQUIP_ENHANCEMENT_DEF_BASE);
-            setIncMdd((short) Math.clamp(getIncMdd() + inc, 0, Short.MAX_VALUE));
         }
     }
 

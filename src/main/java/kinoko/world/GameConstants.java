@@ -29,8 +29,8 @@ public final class GameConstants {
     public static final int HAIR_MAX = 39999;
     public static final int STAT_MIN = 4;
     public static final int STAT_MAX = 32767;
-    public static final int HP_MAX = 99999;
-    public static final int MP_MAX = 99999;
+    public static final int HP_MAX = 30000;
+    public static final int MP_MAX = 30000;
     public static final int PAD_MAX = 29999;
     public static final int PDD_MAX = 30000;
     public static final int MAD_MAX = 29999;
@@ -130,12 +130,6 @@ public final class GameConstants {
             }
             case ARAN_BEGINNER -> {
                 return 914000000;
-            }
-            case EVAN_BEGINNER -> {
-                return 900010000;
-            }
-            case CITIZEN -> {
-                return 931000000;
             }
             default -> {
                 return 0;

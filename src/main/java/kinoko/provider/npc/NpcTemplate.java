@@ -84,9 +84,9 @@ public final class NpcTemplate {
                     if (!(entry.getValue() instanceof WzProperty scriptProp)) {
                         throw new ProviderError("Failed to resolve script property");
                     }
-                    if (scriptProp.getItems().size() > 1) {
-                        throw new ProviderError("Multiple scripts found for npc %d", npcId);
-                    }
+//                    if (scriptProp.getItems().size() > 1) {
+//                        throw new ProviderError("Multiple scripts found for npc %d", npcId);
+//                    }
                     if ((scriptProp.get("script")) instanceof String) {
                         script = scriptProp.get("script");
                     } else if (scriptProp.get("0") instanceof WzProperty scriptList) {

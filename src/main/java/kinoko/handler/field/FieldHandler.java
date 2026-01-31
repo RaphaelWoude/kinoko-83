@@ -29,10 +29,6 @@ public final class FieldHandler {
     @Handler(InHeader.DropPickUpRequest)
     public static void handleDropPickUpRequest(User user, InPacket inPacket) {
         final byte fieldKey = inPacket.decodeByte();
-        if (user.getFieldKey() != fieldKey) {
-            user.dispose();
-            return;
-        }
         inPacket.decodeInt(); // update_time
         inPacket.decodeShort(); // pt->x
         inPacket.decodeShort(); // pt->y
@@ -148,15 +144,5 @@ public final class FieldHandler {
         } else if (eventState == EventState.CONTIMOVE_MOBGEN) {
             user.write(ContiMovePacket.mobGen());
         }
-    }
-
-
-    // BEGIN_ITEMUPGRADE -----------------------------------------------------------------------------------------------
-
-    @Handler(InHeader.ItemUpgradeComplete)
-    public static void handleItemUpgradeComplete(User user, InPacket inPacket) {
-        inPacket.decodeInt(); // nReturnResult
-        final int result = inPacket.decodeInt(); // nResult
-        user.write(FieldPacket.itemUpgradeResultDone(result));
     }
 }

@@ -51,25 +51,13 @@ public final class MobPacket {
 
     public static OutPacket mobMove(Mob mob, MobAttackInfo mai, MovePath movePath) {
         final OutPacket outPacket = OutPacket.of(OutHeader.MobMove);
-        outPacket.encodeInt(mob.getId()); // dwMobID
-        outPacket.encodeByte(false); // bNotForceLandingWhenDiscard
-        outPacket.encodeByte(false); // bNotChangeAction
-        outPacket.encodeByte(mai.actionMask);
-        outPacket.encodeByte(mai.actionAndDir);
-        outPacket.encodeInt(mai.targetInfo);
-        // aMultiTargetForBall
-        outPacket.encodeInt(mai.multiTargetForBall.size());
-        for (var target : mai.multiTargetForBall) {
-            outPacket.encodeInt(target.getLeft()); // x
-            outPacket.encodeInt(target.getRight()); // y
-        }
-        // aRandTimeforAreaAttack
-        outPacket.encodeInt(mai.randTimeForAreaAttack.size());
-        for (int value : mai.randTimeForAreaAttack) {
-            outPacket.encodeInt(value);
-        }
-        // CMovePath::OnMovePacket
-        movePath.encode(outPacket);
+
+        outPacket.encodeInt(mob.getId());          // dwMobID
+        outPacket.encodeByte(mai.actionMask);      // nActionMask
+        outPacket.encodeByte(mai.actionAndDir);    // nActionAndDir
+        outPacket.encodeInt(mai.targetInfo);       // nTargetInfo
+
+        movePath.encode(outPacket);                // CMovePath::OnMovePacket
         return outPacket;
     }
 
@@ -160,13 +148,6 @@ public final class MobPacket {
         outPacket.encodeInt(mob.getId()); // dwMobID
         outPacket.encodeInt(itemId); // nItemID
         outPacket.encodeByte(success); // bSuccess
-        return outPacket;
-    }
-
-    public static OutPacket mobNextAttack(Mob mob) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.MobNextAttack);
-        outPacket.encodeInt(mob.getId()); // dwMobID
-        outPacket.encodeInt(0); // ignored
         return outPacket;
     }
 }

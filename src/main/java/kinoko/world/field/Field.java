@@ -102,10 +102,6 @@ public final class Field {
         return mapInfo.getMapId();
     }
 
-    public int getFieldCrc() {
-        return mapInfo.getFieldCrc();
-    }
-
     public Set<FieldOption> getFieldOptions() {
         return mapInfo.getFieldOptions();
     }

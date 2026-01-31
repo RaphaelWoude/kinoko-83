@@ -9,7 +9,7 @@ public enum FieldEffectType {
     Sound(4),
     MobHPTag(5),
     ChangeBGM(6),
-    RewordRullet(7); // [sic]
+    RewordRullet(7);
 
     private final int value;
 

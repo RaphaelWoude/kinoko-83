@@ -4,13 +4,10 @@ import kinoko.server.header.OutHeader;
 import kinoko.server.packet.OutPacket;
 import kinoko.world.field.life.MovePath;
 import kinoko.world.field.summoned.Summoned;
-import kinoko.world.job.resistance.Mechanic;
 import kinoko.world.skill.Attack;
 import kinoko.world.skill.AttackInfo;
 import kinoko.world.skill.HitInfo;
 import kinoko.world.user.User;
-
-import java.util.List;
 
 public final class SummonedPacket {
     // CSummonedPool::OnPacket -----------------------------------------------------------------------------------------
@@ -34,15 +31,6 @@ public final class SummonedPacket {
         outPacket.encodeByte(summoned.getAvatarLook() != null); // bAvatarLook
         if (summoned.getAvatarLook() != null) {
             summoned.getAvatarLook().encode(outPacket); // AvatarLook::Decode
-        }
-        if (summoned.getSkillId() == Mechanic.ROCK_N_SHOCK) {
-            outPacket.encodeByte(summoned.getTeslaCoilState()); // nTeslaCoilState
-            if (summoned.getTeslaCoilState() == 1) {
-                for (Summoned rockAndShock : user.getSummoned().getOrDefault(Mechanic.ROCK_N_SHOCK, List.of())) {
-                    outPacket.encodeShort(rockAndShock.getX());
-                    outPacket.encodeShort(rockAndShock.getY());
-                }
-            }
         }
         return outPacket;
     }

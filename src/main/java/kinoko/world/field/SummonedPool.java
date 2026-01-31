@@ -3,7 +3,6 @@ package kinoko.world.field;
 import kinoko.packet.user.SummonedPacket;
 import kinoko.world.field.summoned.Summoned;
 import kinoko.world.field.summoned.SummonedEnterType;
-import kinoko.world.job.resistance.Mechanic;
 import kinoko.world.user.User;
 
 public final class SummonedPool extends FieldObjectPool<Summoned> {
@@ -22,9 +21,6 @@ public final class SummonedPool extends FieldObjectPool<Summoned> {
     public boolean removeSummoned(User user, Summoned summoned) {
         if (!removeObject(summoned)) {
             return false;
-        }
-        if (summoned.getSkillId() == Mechanic.ACCELERATION_BOT_EX_7) {
-            Mechanic.handleRemoveAccelerationBot(summoned);
         }
         field.broadcastPacket(SummonedPacket.summonedLeaveField(user, summoned));
         return true;

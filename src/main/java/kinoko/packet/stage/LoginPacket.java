@@ -28,27 +28,41 @@ public final class LoginPacket {
         return outPacket;
     }
 
-    public static OutPacket checkPasswordResultSuccess(Account account, byte[] clientKey) {
+    public static OutPacket checkPasswordResultSuccess(Account account) {
         final OutPacket outPacket = OutPacket.of(OutHeader.CheckPasswordResult);
-        outPacket.encodeByte(LoginResultType.Success.getValue());
-        outPacket.encodeByte(0); // 0 or 1
-        outPacket.encodeInt(0);
+        outPacket.encodeInt(LoginResultType.Success.getValue());
+        outPacket.encodeShort(0);
 
         outPacket.encodeInt(account.getId()); // dwAccountId
         outPacket.encodeByte(0); // nGender
-        outPacket.encodeByte(0); // nGradeCode
-        outPacket.encodeShort(0); // nSubGradeCode | bTesterAccount
+        outPacket.encodeByte(false); // nGradeCode
+        outPacket.encodeByte(false); // nAdmin
         outPacket.encodeByte(0); // nCountryID
+
         outPacket.encodeString(""); // sNexonClubID
         outPacket.encodeByte(0); // nPurchaseExp
+
         outPacket.encodeByte(0); // nChatBlockReason
         outPacket.encodeLong(0); // dtChatUnblockDate
         outPacket.encodeLong(0); // dtRegisterDate
-        outPacket.encodeInt(account.getSlotCount()); // nNumOfCharacter
 
-        outPacket.encodeByte(true); // true ? VIEW_WORLD_SELECT : CHECK_PIN_CODE
-        outPacket.encodeByte(LoginOpt.getLoginOpt(account).getValue()); // bLoginOpt
-        outPacket.encodeArray(clientKey);
+        outPacket.encodeInt(1); // nNumOfCharacter
+
+        outPacket.encodeByte(0); // pin
+        outPacket.encodeByte(2); // pic
+
+        return outPacket;
+    }
+
+    public static OutPacket checkPinCodeResult(CheckPinCodeResultType resultType) {
+        final OutPacket outPacket = OutPacket.of(OutHeader.CheckPinCodeResult);
+        outPacket.encodeByte(resultType.getValue());
+        return outPacket;
+    }
+
+    public static OutPacket updatePinCodeResult(boolean updateResult) {
+        final OutPacket outPacket = OutPacket.of(OutHeader.UpdatePinCodeResult);
+        outPacket.encodeByte(updateResult ? 1 : 0);
         return outPacket;
     }
 
@@ -117,11 +131,11 @@ public final class LoginPacket {
     public static OutPacket selectWorldResultSuccess(Account account) {
         final OutPacket outPacket = OutPacket.of(OutHeader.SelectWorldResult);
         outPacket.encodeByte(LoginResultType.Success.getValue());
-
         outPacket.encodeByte(account.getCharacterList().size());
+
         for (AvatarData avatarData : account.getCharacterList()) {
             avatarData.encode(outPacket);
-            outPacket.encodeByte(false); // m_abOnFamily
+            outPacket.encodeByte(false);
             final Optional<CharacterRank> characterRankResult = RankManager.getCharacterRank(avatarData);
             if (characterRankResult.isPresent()) {
                 outPacket.encodeByte(true);
@@ -131,9 +145,8 @@ public final class LoginPacket {
             }
         }
 
-        outPacket.encodeByte(LoginOpt.getLoginOpt(account).getValue()); // bLoginOpt
+        outPacket.encodeByte(2); // bLoginOpt
         outPacket.encodeInt(account.getSlotCount()); // nSlotCount
-        outPacket.encodeInt(0); // nBuyCharCount
         return outPacket;
     }
 
@@ -145,14 +158,14 @@ public final class LoginPacket {
 
     public static OutPacket selectCharacterResultSuccess(byte[] channelHost, int channelPort, int characterId) {
         final OutPacket outPacket = OutPacket.of(OutHeader.SelectCharacterResult);
-        outPacket.encodeByte(LoginResultType.Success.getValue());
-        outPacket.encodeByte(0);
+        outPacket.encodeShort(LoginResultType.Success.getValue());
 
         outPacket.encodeArray(channelHost); // sin_addr
         outPacket.encodeShort(channelPort); // uPort
         outPacket.encodeInt(characterId);
-        outPacket.encodeByte(0); // bAuthenCode
-        outPacket.encodeInt(0); // ulPremiumArgument
+        outPacket.encodeByte(0);
+        outPacket.encodeInt(0);
+
         return outPacket;
     }
 

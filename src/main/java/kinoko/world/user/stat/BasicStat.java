@@ -1,26 +1,16 @@
 package kinoko.world.user.stat;
 
-import kinoko.provider.EtcProvider;
 import kinoko.provider.ItemProvider;
-import kinoko.provider.SkillProvider;
 import kinoko.provider.item.ItemInfo;
 import kinoko.provider.item.ItemInfoType;
-import kinoko.provider.item.ItemOptionLevelData;
-import kinoko.provider.item.SetItemInfo;
-import kinoko.provider.skill.SkillInfo;
-import kinoko.provider.skill.SkillStat;
 import kinoko.world.GameConstants;
 import kinoko.world.item.EquipData;
 import kinoko.world.item.Item;
-import kinoko.world.job.resistance.WildHunter;
 import kinoko.world.skill.PassiveSkillData;
-import kinoko.world.skill.SkillConstants;
 import kinoko.world.skill.SkillManager;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public final class BasicStat {
     private int gender;
@@ -89,7 +79,6 @@ public final class BasicStat {
         this.maxHp = cs.getMaxHp();
         this.maxMp = cs.getMaxMp();
 
-        final BasicStatRateOption option = new BasicStatRateOption();
         int incMaxHpR = 0;
         int incMaxMpR = 0;
 
@@ -112,38 +101,6 @@ public final class BasicStat {
 
             incMaxHpR += ii.getInfo(ItemInfoType.incMHPr);
             incMaxMpR += ii.getInfo(ItemInfoType.incMMPr);
-
-            final int optionLevel = ii.getOptionLevel(); // no sockets in v95
-            if (ed.isReleased()) {
-                this.applyItemOption(ed.getOption1(), optionLevel);
-                this.applyItemOption(ed.getOption2(), optionLevel);
-                this.applyItemOption(ed.getOption3(), optionLevel);
-                option.applyItemOptionR(ed.getOption1(), optionLevel);
-                option.applyItemOptionR(ed.getOption2(), optionLevel);
-                option.applyItemOptionR(ed.getOption3(), optionLevel);
-            }
-        }
-
-        // Set items
-        for (SetItemInfo setItemInfo : EtcProvider.getSetItemInfos()) {
-            final Set<Integer> equippedItems = realEquip.values().stream().map(Item::getItemId).collect(Collectors.toSet());
-            equippedItems.retainAll(setItemInfo.getItems());
-            for (int itemCount = 0; itemCount <= equippedItems.size(); itemCount++) {
-                final Map<ItemInfoType, Integer> effect = setItemInfo.getEffect().get(itemCount);
-                if (effect == null) {
-                    continue;
-                }
-                for (var entry : effect.entrySet()) {
-                    switch (entry.getKey()) {
-                        case incSTR -> this.str += entry.getValue();
-                        case incDEX -> this.dex += entry.getValue();
-                        case incINT -> this.int_ += entry.getValue();
-                        case incLUK -> this.luk += entry.getValue();
-                        case incMHP -> this.maxHp += entry.getValue();
-                        case incMMP -> this.maxMp += entry.getValue();
-                    }
-                }
-            }
         }
 
         // BasicStatUp CTS (Maple Warrior)
@@ -171,80 +128,19 @@ public final class BasicStat {
         this.maxHp += ss.getOption(CharacterTemporaryStat.EMHP).nOption;
         this.maxMp += ss.getOption(CharacterTemporaryStat.EMMP).nOption;
 
-        this.str += option.strR * this.str / 100;
-        this.dex += option.dexR * this.dex / 100;
-        this.int_ += option.intR * this.int_ / 100;
-        this.luk += option.lukR * this.luk / 100;
-
         int hpIncRateFromCts = ss.getOption(CharacterTemporaryStat.Conversion).nOption;
         hpIncRateFromCts = Math.max(hpIncRateFromCts, ss.getOption(CharacterTemporaryStat.MaxHP).nOption);
         hpIncRateFromCts = Math.max(hpIncRateFromCts, ss.getOption(CharacterTemporaryStat.MorewildMaxHP).nOption);
-        hpIncRateFromCts += getJaguarRidingMaxHpUp(ss, sm);
         int mpIncRateFromCts = ss.getOption(CharacterTemporaryStat.SwallowMaxMP).nOption;
         mpIncRateFromCts += ss.getOption(CharacterTemporaryStat.MaxMP).nOption;
 
         // Max hp/mp rate increases
-        this.maxHp += this.maxHp * (incMaxHpR + option.incMaxHpR + hpIncRateFromCts + psd.getMhpR()) / 100;
-        this.maxMp += this.maxMp * (incMaxMpR + option.incMaxMpR + mpIncRateFromCts + psd.getMmpR()) / 100;
+        this.maxHp += this.maxHp * (incMaxHpR + hpIncRateFromCts + psd.getMhpR()) / 100;
+        this.maxMp += this.maxMp * (incMaxMpR + mpIncRateFromCts + psd.getMmpR()) / 100;
 
         // Max hp/mp cap
         this.maxHp = Math.min(this.maxHp, GameConstants.HP_MAX);
         this.maxMp = Math.min(this.maxMp, GameConstants.MP_MAX);
     }
 
-    private void applyItemOption(int itemOptionId, int optionLevel) {
-        final Optional<ItemOptionLevelData> itemOptionResult = ItemProvider.getItemOptionInfo(itemOptionId, optionLevel);
-        if (itemOptionResult.isEmpty()) {
-            return;
-        }
-        for (var entry : itemOptionResult.get().getStats().entrySet()) {
-            switch (entry.getKey()) {
-                case incSTR -> this.str += entry.getValue();
-                case incDEX -> this.dex += entry.getValue();
-                case incINT -> this.int_ += entry.getValue();
-                case incLUK -> this.luk += entry.getValue();
-                case incMHP -> this.maxHp += entry.getValue();
-                case incMMP -> this.maxMp += entry.getValue();
-            }
-        }
-    }
-
-    private int getJaguarRidingMaxHpUp(SecondaryStat ss, SkillManager sm) {
-        if (!SkillConstants.WILD_HUNTER_JAGUARS.contains(ss.getRidingVehicle())) {
-            return 0;
-        }
-        final Optional<SkillInfo> skillInfoResult = SkillProvider.getSkillInfoById(WildHunter.JAGUAR_RIDER);
-        if (skillInfoResult.isEmpty()) {
-            return 0;
-        }
-        final SkillInfo si = skillInfoResult.get();
-        final int slv = SkillManager.getSkillLevel(ss, sm, WildHunter.JAGUAR_RIDER);
-        return si.getValue(SkillStat.z, slv);
-    }
-
-    private static class BasicStatRateOption {
-        private int strR;
-        private int dexR;
-        private int intR;
-        private int lukR;
-        private int incMaxHpR;
-        private int incMaxMpR;
-
-        private void applyItemOptionR(int itemOptionId, int optionLevel) {
-            final Optional<ItemOptionLevelData> itemOptionResult = ItemProvider.getItemOptionInfo(itemOptionId, optionLevel);
-            if (itemOptionResult.isEmpty()) {
-                return;
-            }
-            for (var entry : itemOptionResult.get().getStats().entrySet()) {
-                switch (entry.getKey()) {
-                    case incSTRr -> this.strR += entry.getValue();
-                    case incDEXr -> this.dexR += entry.getValue();
-                    case incINTr -> this.intR += entry.getValue();
-                    case incLUKr -> this.lukR += entry.getValue();
-                    case incMHPr -> this.incMaxHpR += entry.getValue();
-                    case incMMPr -> this.incMaxMpR += entry.getValue();
-                }
-            }
-        }
-    }
 }

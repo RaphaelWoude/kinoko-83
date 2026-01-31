@@ -21,11 +21,6 @@ import kinoko.world.job.JobConstants;
 import kinoko.world.job.cygnus.*;
 import kinoko.world.job.explorer.*;
 import kinoko.world.job.legend.Aran;
-import kinoko.world.job.legend.Evan;
-import kinoko.world.job.resistance.BattleMage;
-import kinoko.world.job.resistance.Citizen;
-import kinoko.world.job.resistance.Mechanic;
-import kinoko.world.job.resistance.WildHunter;
 import kinoko.world.skill.*;
 import kinoko.world.user.User;
 import org.apache.logging.log4j.LogManager;
@@ -326,12 +321,6 @@ public final class CalcDamage {
         }
         criticalRate += user.getSecondaryStat().getItemCriR();
         criticalRate += user.getPassiveSkillData().getCr();
-        if (SkillConstants.WILD_HUNTER_JAGUARS.contains(user.getSecondaryStat().getRidingVehicle())) {
-            criticalRate += user.getSkillStatValue(WildHunter.JAGUAR_RIDER, SkillStat.w);
-        }
-        if (JobConstants.isEvanJob(user.getJob())) {
-            criticalRate += user.getSkillStatValue(Evan.CRITICAL_MAGIC, SkillStat.prop);
-        }
         return criticalRate;
     }
 
@@ -339,9 +328,6 @@ public final class CalcDamage {
         // get_critical_skill_level
         if (attack.getAction() == ActionType.ASSASSINATIONS.getValue()) {
             return Thief.ASSASSINATE;
-        }
-        if (JobConstants.isResistanceJob(user.getJob())) {
-            return Citizen.DEADLY_CRITS;
         }
         final Item weapon = user.getInventoryManager().getEquipped().getItem(BodyPart.WEAPON.getValue());
         if (weapon == null) {
@@ -457,7 +443,7 @@ public final class CalcDamage {
         int pad = ss.getPad() + getIncPad(user) + getIncEpad(user) + psd.getPadX() + ss.getOption(CharacterTemporaryStat.BlessingArmorIncPAD).nOption;
         // CItemInfo::GetBulletPAD
         final int bulletItemId = getBulletItemId(user);
-        if (bulletItemId != 0 && !JobConstants.isMechanicJob(user.getJob())) {
+        if (bulletItemId != 0) {
             pad += ItemProvider.getItemInfo(bulletItemId).map((ii) -> ii.getInfo(ItemInfoType.incPAD)).orElse(0);
         }
         // nComboAbilityBuff
@@ -470,7 +456,6 @@ public final class CalcDamage {
         }
         // Apply padR
         final int statPadR = ss.getOption(CharacterTemporaryStat.MaxLevelBuff).nOption +
-                ss.getOption(CharacterTemporaryStat.DarkAura).nOption +
                 ss.getOption(CharacterTemporaryStat.MorewildDamageUp).nOption +
                 ss.getOption(CharacterTemporaryStat.SwallowAttackDamage).nOption;
         final int totalPadR = statPadR + psd.getPadR() + ss.getItemPadR();
@@ -487,11 +472,8 @@ public final class CalcDamage {
         // nMAD + incMAD + nPsdMADX
         int mad = ss.getMad() + ss.getOption(CharacterTemporaryStat.MAD).nOption + psd.getMadX();
         // Apply madR
-        final int dragonFury = Evan.isDragonFury(user) ? user.getSkillStatValue(Evan.DRAGON_FURY, SkillStat.damage) : 0;
         final int statMadR = ss.getOption(CharacterTemporaryStat.MaxLevelBuff).nOption +
-                ss.getOption(CharacterTemporaryStat.DarkAura).nOption +
-                ss.getOption(CharacterTemporaryStat.SwallowAttackDamage).nOption +
-                dragonFury;
+                ss.getOption(CharacterTemporaryStat.SwallowAttackDamage).nOption;
         final int totalMadR = statMadR + psd.getMadR() + ss.getItemMadR();
         if (totalMadR > 0) {
             mad += mad * totalMadR / 100;
@@ -606,11 +588,7 @@ public final class CalcDamage {
             }
             case WAND, STAFF -> {
                 // get_magic_mastery
-                if (JobConstants.isEvanJob(user.getJob())) {
-                    return getMasteryFromSkill(user, Evan.MAGIC_MASTERY, Evan.SPELL_MASTERY);
-                } else if (JobConstants.isBattleMageJob(user.getJob())) {
-                    return getMasteryFromSkill(user, BattleMage.STAFF_MASTERY);
-                } else if (JobConstants.isBlazeWizardJob(user.getJob())) {
+                if (JobConstants.isBlazeWizardJob(user.getJob())) {
                     return getMasteryFromSkill(user, BlazeWizard.SPELL_MASTERY);
                 } else if (JobConstants.isFirePoisonJob(user.getJob())) {
                     return getMasteryFromSkill(user, Magician.SPELL_MASTERY_FP);
@@ -638,11 +616,7 @@ public final class CalcDamage {
                 }
             }
             case CROSSBOW -> {
-                if (JobConstants.isWildHunterJob(user.getJob())) {
-                    return getMasteryFromSkill(user, WildHunter.CROSSBOW_EXPERT, WildHunter.CROSSBOW_MASTERY);
-                } else {
-                    return getMasteryFromSkill(user, Bowman.MARKSMAN_BOOST, Bowman.CROSSBOW_MASTERY);
-                }
+                return getMasteryFromSkill(user, Bowman.MARKSMAN_BOOST, Bowman.CROSSBOW_MASTERY);
             }
             case THROWINGGLOVE -> {
                 if (JobConstants.isCygnusJob(user.getJob())) {
@@ -659,11 +633,7 @@ public final class CalcDamage {
                 }
             }
             case GUN -> {
-                if (JobConstants.isMechanicJob(user.getJob())) {
-                    return getMasteryFromSkill(user, Mechanic.EXTREME_MECH, Mechanic.MECHANIC_MASTERY);
-                } else {
-                    return getMasteryFromSkill(user, Pirate.GUN_MASTERY);
-                }
+                return getMasteryFromSkill(user, Pirate.GUN_MASTERY);
             }
         }
         return 0;

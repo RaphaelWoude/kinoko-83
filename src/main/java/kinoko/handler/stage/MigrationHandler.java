@@ -32,7 +32,6 @@ import kinoko.util.Tuple;
 import kinoko.world.GameConstants;
 import kinoko.world.field.Field;
 import kinoko.world.item.*;
-import kinoko.world.job.JobConstants;
 import kinoko.world.user.CharacterData;
 import kinoko.world.user.*;
 import kinoko.world.user.data.ConfigManager;
@@ -54,13 +53,6 @@ public final class MigrationHandler {
     @Handler(InHeader.MigrateIn)
     public static void handleMigrateIn(Client c, InPacket inPacket) {
         final int characterId = inPacket.decodeInt();
-        final byte[] machineId = inPacket.decodeArray(16);
-        inPacket.decodeBoolean(); // CWvsContext->m_nSubGradeCode >> 7
-        inPacket.decodeByte(); // hardcoded 0
-        final byte[] clientKey = inPacket.decodeArray(8);
-
-        c.setMachineId(machineId);
-        c.setClientKey(clientKey);
 
         // Resolve account id
         final Optional<Integer> accountIdResult = DatabaseManager.characterAccessor().getAccountIdByCharacterId(characterId);
@@ -73,7 +65,7 @@ public final class MigrationHandler {
 
         // Send migrate request to central server
         final ChannelServerNode channelServerNode = ((ChannelServerNode) c.getServerNode());
-        channelServerNode.submitMigrationRequest(accountId, characterId, machineId, clientKey, (migrationResult) -> {
+        channelServerNode.submitMigrationRequest(accountId, characterId, (migrationResult) -> {
             if (migrationResult.isEmpty()) {
                 log.error("Failed to retrieve migration result for character ID : {}", characterId);
                 c.close();
@@ -147,11 +139,6 @@ public final class MigrationHandler {
                 user.addPet(pet, true);
             }
 
-            // Initialize dragon
-            if (JobConstants.isDragonJob(user.getJob())) {
-                user.setDragon(new Dragon(user.getJob()));
-            }
-
             // Initialize user data from MigrationInfo
             user.getSecondaryStat().getTemporaryStats().putAll(migrationInfo.getTemporaryStats());
             user.getSchedules().putAll(migrationInfo.getSchedules());
@@ -184,7 +171,6 @@ public final class MigrationHandler {
 
                 // Initialize func keys and quickslot
                 final ConfigManager cm = user.getConfigManager();
-                user.write(WvsContext.macroSysDataInit(cm.getMacroSysData()));
                 user.write(FieldPacket.funcKeyMappedInit(cm.getFuncKeyMap()));
                 user.write(FieldPacket.quickslotMappedInit(cm.getQuickslotKeyMap()));
                 user.write(FieldPacket.petConsumeItemInit(cm.getPetConsumeItem()));
@@ -210,7 +196,7 @@ public final class MigrationHandler {
                 // Load memos
                 final List<Memo> memos = DatabaseManager.memoAccessor().getMemosByCharacterId(user.getCharacterId());
                 if (!memos.isEmpty()) {
-                    user.write(MemoPacket.load(memos));
+                    // user.write(MemoPacket.load(memos));
                 }
 
                 // Load friends
@@ -238,10 +224,6 @@ public final class MigrationHandler {
 
         // Normal transfer field request
         final byte fieldKey = inPacket.decodeByte();
-        if (user.getFieldKey() != fieldKey) {
-            user.dispose();
-            return;
-        }
         final int targetFieldId = inPacket.decodeInt(); // dwTargetField
         final String portalName = inPacket.decodeString(); // sPortal
         if (!portalName.isEmpty()) {

@@ -15,7 +15,6 @@ import kinoko.world.user.Pet;
 import kinoko.world.user.User;
 import kinoko.world.user.data.PopularityResultType;
 import kinoko.world.user.data.SingleMacro;
-import kinoko.world.user.data.WildHunterInfo;
 import kinoko.world.user.stat.CharacterTemporaryStat;
 import kinoko.world.user.stat.ExtendSp;
 import kinoko.world.user.stat.SecondaryStat;
@@ -32,8 +31,8 @@ public final class WvsContext {
     public static OutPacket statChanged(Map<Stat, Object> statMap, boolean exclRequest) {
         final OutPacket outPacket = OutPacket.of(OutHeader.StatChanged);
         outPacket.encodeByte(exclRequest); // bool -> bExclRequestSent = 0
-
         outPacket.encodeInt(Stat.from(statMap.keySet()));
+
         for (Stat stat : Stat.ENCODE_ORDER) {
             if (statMap.containsKey(stat)) {
                 switch (stat) {
@@ -43,10 +42,10 @@ public final class WvsContext {
                     case JOB, STR, DEX, INT, LUK, AP, POP -> {
                         outPacket.encodeShort((short) statMap.get(stat));
                     }
-                    case FACE, HAIR, HP, MHP, MP, MMP, EXP, MONEY, TEMPEXP -> {
+                    case FACE, HAIR, HP, MHP, MP, EXP, MONEY, TEMPEXP -> {
                         outPacket.encodeInt((int) statMap.get(stat));
                     }
-                    case PETSN, PETSN2, PETSN3 -> {
+                    case PET -> {
                         outPacket.encodeLong((long) statMap.get(stat));
                     }
                     case SP -> {
@@ -60,8 +59,6 @@ public final class WvsContext {
             }
         }
 
-        outPacket.encodeByte(false); // bool -> byte (CUserLocal::SetSecondaryStatChangedPoint)
-        outPacket.encodeByte(false); // bool -> int, int (CBattleRecordMan::SetBattleRecoveryInfo)
         return outPacket;
     }
 
@@ -248,14 +245,14 @@ public final class WvsContext {
         final OutPacket outPacket = OutPacket.of(OutHeader.TownPortal);
         outPacket.encodeInt(GameConstants.UNDEFINED_FIELD_ID);
         outPacket.encodeInt(GameConstants.UNDEFINED_FIELD_ID);
-        outPacket.encodeInt(0);
-        outPacket.encodeShort(0);
-        outPacket.encodeShort(0);
+//        outPacket.encodeInt(0);
+//        outPacket.encodeShort(0);
+//        outPacket.encodeShort(0);
         return outPacket;
     }
 
     public static OutPacket imitatedNpcData(List<NpcImitateData> npcImitateData) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.ImitatedNPCData);
+        final OutPacket outPacket = OutPacket.of(OutHeader.ImitateNpcData);
         outPacket.encodeByte(npcImitateData.size());
         for (NpcImitateData data : npcImitateData) {
             data.encode(outPacket);
@@ -289,7 +286,7 @@ public final class WvsContext {
     }
 
     public static OutPacket avatarMegaphoneUpdateMessage(User user, int itemId, String s1, String s2, String s3, String s4, boolean whisperIcon) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.AvatarMegaphoneUpdateMessage);
+        final OutPacket outPacket = OutPacket.of(OutHeader.SetAvatarMegaphone);
         outPacket.encodeInt(itemId); // nItemID
         outPacket.encodeString(user.getCharacterName()); // sName
         outPacket.encodeString(s1);
@@ -303,7 +300,7 @@ public final class WvsContext {
     }
 
     public static OutPacket avatarMegaphoneClearMessage() {
-        return OutPacket.of(OutHeader.AvatarMegaphoneClearMessage);
+        return OutPacket.of(OutHeader.ClearAvatarMegaphone);
     }
 
     public static OutPacket scriptProgressMessage(String message) {
@@ -312,14 +309,8 @@ public final class WvsContext {
         return outPacket;
     }
 
-    public static OutPacket wildHunterInfo(WildHunterInfo wildHunterInfo) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.WildHunterInfo);
-        wildHunterInfo.encode(outPacket); // GW_WildHunterInfo::Decode
-        return outPacket;
-    }
-
     public static OutPacket macroSysDataInit(List<SingleMacro> macroSysData) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.MacroSysDataInit);
+        final OutPacket outPacket = OutPacket.of(OutHeader.AntiMacroResult);
         outPacket.encodeByte(macroSysData.size());
         for (SingleMacro macroSysDatum : macroSysData) {
             macroSysDatum.encode(outPacket); // SINGLEMACRO::Decode

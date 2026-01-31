@@ -2,14 +2,12 @@ package kinoko.packet.field;
 
 import kinoko.provider.map.FieldType;
 import kinoko.script.common.ScriptMessage;
-import kinoko.server.cashshop.CashItemResultType;
 import kinoko.server.dialog.miniroom.EntrustedShop;
 import kinoko.server.dialog.shop.ShopDialog;
 import kinoko.server.dialog.shop.ShopResultType;
 import kinoko.server.header.OutHeader;
 import kinoko.server.packet.OutPacket;
 import kinoko.world.GameConstants;
-import kinoko.world.field.OpenGate;
 import kinoko.world.field.TownPortal;
 import kinoko.world.field.affectedarea.AffectedArea;
 import kinoko.world.field.drop.Drop;
@@ -64,7 +62,7 @@ public final class FieldPacket {
     }
 
     public static OutPacket clock(int hour, int min, int sec) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.Clock);
+        final OutPacket outPacket = OutPacket.of(OutHeader.ScriptEvent);
         outPacket.encodeByte(1); // CClock::SetClock
         outPacket.encodeByte(hour); // nHour
         outPacket.encodeByte(min); // nMin
@@ -73,7 +71,7 @@ public final class FieldPacket {
     }
 
     public static OutPacket clock(int remain) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.Clock);
+        final OutPacket outPacket = OutPacket.of(OutHeader.ScriptEvent);
         outPacket.encodeByte(2); // CClock::SetTimer
         outPacket.encodeInt(remain); // nRemain
         return outPacket;
@@ -86,9 +84,9 @@ public final class FieldPacket {
         return outPacket;
     }
 
-    public static OutPacket destroyClock() {
-        return OutPacket.of(OutHeader.DestroyClock);
-    }
+//    public static OutPacket destroyClock() {
+//        return OutPacket.of(OutHeader.DestroyClock);
+//    }
 
     public static OutPacket quickslotMappedInit(int[] quickslotKeyMap) {
         final OutPacket outPacket = OutPacket.of(OutHeader.QuickslotMappedInit);
@@ -192,23 +190,23 @@ public final class FieldPacket {
 
     // CMessageBoxPool::OnPacket ---------------------------------------------------------------------------------------
 
-    public static OutPacket messageBoxEnterField(User user, int messageBoxId, int itemId, String message) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.MessageBoxEnterField);
-        outPacket.encodeInt(messageBoxId); // dwMessageBoxID
-        outPacket.encodeInt(itemId); // nItemID
-        outPacket.encodeString(message); // sHope
-        outPacket.encodeString(user.getCharacterName()); // sCharacterName
-        outPacket.encodeShort(user.getX()); // ptHost.x
-        outPacket.encodeShort(user.getY()); // ptHost.y
-        return outPacket;
-    }
-
-    public static OutPacket messageBoxLeaveField(int messageBoxId) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.MessageBoxLeaveField);
-        outPacket.encodeByte(0); // 0 = animate, 1 = no animation
-        outPacket.encodeInt(messageBoxId); // dwMessageBoxID
-        return outPacket;
-    }
+//    public static OutPacket messageBoxEnterField(User user, int messageBoxId, int itemId, String message) {
+//        final OutPacket outPacket = OutPacket.of(OutHeader.MessageBoxEnterField);
+//        outPacket.encodeInt(messageBoxId); // dwMessageBoxID
+//        outPacket.encodeInt(itemId); // nItemID
+//        outPacket.encodeString(message); // sHope
+//        outPacket.encodeString(user.getCharacterName()); // sCharacterName
+//        outPacket.encodeShort(user.getX()); // ptHost.x
+//        outPacket.encodeShort(user.getY()); // ptHost.y
+//        return outPacket;
+//    }
+//
+//    public static OutPacket messageBoxLeaveField(int messageBoxId) {
+//        final OutPacket outPacket = OutPacket.of(OutHeader.MessageBoxLeaveField);
+//        outPacket.encodeByte(0); // 0 = animate, 1 = no animation
+//        outPacket.encodeInt(messageBoxId); // dwMessageBoxID
+//        return outPacket;
+//    }
 
 
     // CAffectedAreaPool::OnPacket -------------------------------------------------------------------------------------
@@ -245,28 +243,6 @@ public final class FieldPacket {
         final OutPacket outPacket = OutPacket.of(OutHeader.TownPortalRemoved);
         outPacket.encodeByte(!animate); // nState : remove animation if false
         outPacket.encodeInt(townPortal.getOwner().getCharacterId()); // dwCharacterID
-        return outPacket;
-    }
-
-
-    // COpenGatePool::OnPacket ---------------------------------------------------------------------------------------
-
-    public static OutPacket openGateCreated(User user, OpenGate openGate, boolean animate) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.OpenGateCreated);
-        outPacket.encodeByte(!animate); // nState : create animation if false
-        outPacket.encodeInt(user.getCharacterId()); // dwCharacterID
-        outPacket.encodeShort(openGate.getX());
-        outPacket.encodeShort(openGate.getY());
-        outPacket.encodeByte(openGate.isFirst());
-        outPacket.encodeInt(user.getPartyId());
-        return outPacket;
-    }
-
-    public static OutPacket openGateRemoved(User user, boolean notify, boolean first) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.OpenGateRemoved);
-        outPacket.encodeByte(notify); // The Portal that was installed earlier has disappeared.
-        outPacket.encodeInt(user.getCharacterId()); // dwCharacterID
-        outPacket.encodeByte(first);
         return outPacket;
     }
 
@@ -348,9 +324,8 @@ public final class FieldPacket {
 
     public static OutPacket funcKeyMappedInit(FuncKeyMapped[] funcKeyMap) {
         final OutPacket outPacket = OutPacket.of(OutHeader.FuncKeyMappedInit);
-        outPacket.encodeByte(false); // defaults if true
-        // 89 * FUNC_KEY_MAPPED (5)
-        assert funcKeyMap.length == GameConstants.FUNC_KEY_MAP_SIZE;
+        outPacket.encodeByte(0);
+
         for (FuncKeyMapped funcKeyMapped : funcKeyMap) {
             funcKeyMapped.encode(outPacket);
         }
@@ -366,32 +341,6 @@ public final class FieldPacket {
     public static OutPacket petConsumeMpItemInit(int itemId) {
         final OutPacket outPacket = OutPacket.of(OutHeader.PetConsumeMPItemInit);
         outPacket.encodeInt(itemId); // nPetConsumeMPItemID
-        return outPacket;
-    }
-
-
-    // CUIItemUpgrade::OnPacket ----------------------------------------------------------------------------------------
-
-    public static OutPacket itemUpgradeResultSuccess(int iuc) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.ItemUpgradeResult);
-        outPacket.encodeByte(CashItemResultType.ItemUpgradeSuccess.getValue());
-        outPacket.encodeInt(0); // nResult
-        outPacket.encodeInt(iuc); // nIUC
-        return outPacket;
-    }
-
-    public static OutPacket itemUpgradeResultDone(int result) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.ItemUpgradeResult);
-        outPacket.encodeByte(CashItemResultType.ItemUpgradeDone.getValue());
-        outPacket.encodeInt(result); // nResult
-        outPacket.encodeInt(0); // nIUC?
-        return outPacket;
-    }
-
-    public static OutPacket itemUpgradeResultErr(int reason) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.ItemUpgradeResult);
-        outPacket.encodeByte(CashItemResultType.ItemUpgradeErr.getValue());
-        outPacket.encodeInt(reason); // 1 : The item is not upgradable. | 2 : 2 upgrade increases have been used already. | 3 : You can't use Vicious' Hammer on Horntail Necklace. | Unknown Error (%d).
         return outPacket;
     }
 }

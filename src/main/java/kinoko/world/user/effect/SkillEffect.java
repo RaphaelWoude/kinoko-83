@@ -3,8 +3,6 @@ package kinoko.world.user.effect;
 import kinoko.server.packet.OutPacket;
 import kinoko.world.job.explorer.Thief;
 import kinoko.world.job.explorer.Warrior;
-import kinoko.world.job.legend.Evan;
-import kinoko.world.job.resistance.Citizen;
 
 public final class SkillEffect extends Effect {
     public int skillId;
@@ -29,32 +27,19 @@ public final class SkillEffect extends Effect {
                 outPacket.encodeByte(charLevel); // nCharLevel
                 outPacket.encodeByte(skillLevel); // nSLV
                 switch (skillId) {
-                    case Warrior.BERSERK, Evan.DRAGON_FURY -> {
+                    case Warrior.BERSERK -> {
                         outPacket.encodeByte(enable); // bool -> CUser::LoadDarkForceEffect | CDragon::CreateEffect(1)
                     }
                     case Thief.CHAINS_OF_HELL -> {
                         outPacket.encodeByte(left); // bLeft
                         outPacket.encodeInt(info); // dwMobID
                     }
-                    case Citizen.CALL_OF_THE_HUNTER -> {
-                        outPacket.encodeByte(left); // bLeft
-                        outPacket.encodeShort(positionX); // ptOffset.x
-                        outPacket.encodeShort(positionY); // ptOffset.y
-                    }
-                    case Citizen.CAPTURE -> {
-                        outPacket.encodeByte(info); // 0 : monster successfully captured, 1 : capture failed monster hp too high, 2 : monster cannot be captured
-                    }
                 }
                 if (skillId / 10000000 == 9) { // is_unregistered_skill
                     outPacket.encodeByte(left); // bLeft
                 }
             }
-            case SkillAffected, SkillSpecialAffected -> {
-                outPacket.encodeInt(skillId); // nSkillID
-                outPacket.encodeByte(skillLevel); // nSLV
-            }
-            case SkillAffected_Select -> {
-                outPacket.encodeInt(info); // nSelect
+            case SkillAffected -> {
                 outPacket.encodeInt(skillId); // nSkillID
                 outPacket.encodeByte(skillLevel); // nSLV
             }

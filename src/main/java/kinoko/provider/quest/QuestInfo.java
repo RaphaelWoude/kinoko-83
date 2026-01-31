@@ -12,16 +12,19 @@ import kinoko.world.quest.QuestManager;
 import kinoko.world.quest.QuestRecord;
 import kinoko.world.quest.QuestState;
 import kinoko.world.user.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public final class QuestInfo {
+    private static final Logger log = LoggerFactory.getLogger(QuestInfo.class);
     private final int questId;
     private final String questName;
     private final String questParent;
     private final int questArea; // category
-    private final int nextQuest;
+    private int nextQuest;
     private final boolean autoStart;
     private final boolean autoComplete;
     private final List<QuestAct> startActs;
@@ -41,6 +44,10 @@ public final class QuestInfo {
         this.completeActs = completeActs;
         this.startChecks = startChecks;
         this.completeChecks = completeChecks;
+
+        if (questId == 1031) {
+            log.error(toString());
+        }
     }
 
     public int getQuestId() {
@@ -285,24 +292,56 @@ public final class QuestInfo {
         String questParent = "";
         boolean autoStart = false;
         boolean autoComplete = false;
-        for (var infoEntry : questInfo.getItems().entrySet()) {
-            switch (infoEntry.getKey()) {
+
+        for (var entry : questInfo.getItems().entrySet()) {
+            switch (entry.getKey()) {
                 case "name" -> {
-                    questName = WzProvider.getString(infoEntry.getValue());
+                    String name = WzProvider.getStringOrNull(entry.getValue());
+                    assert name != null;
+                    questName = name;
                 }
                 case "parent" -> {
-                    questParent = WzProvider.getString(infoEntry.getValue());
+                    String parent = WzProvider.getStringOrNull(entry.getValue());
+                    assert parent != null;
+                    questParent = parent;
                 }
-                case "autoStart" -> {
-                    autoStart = (int) infoEntry.getValue() != 0;
-                }
-                case "autoComplete" -> {
-                    autoComplete = (int) infoEntry.getValue() != 0;
+                case "autoStart" -> autoStart = (int) entry.getValue() != 0;
+                case "autoComplete" -> autoComplete = (int) entry.getValue() != 0;
+            }
+        }
+
+        int nextQuest = 0;
+        List<QuestAct> questActs0 = List.of();
+        List<QuestAct> questActs1 = List.of();
+
+        if (questAct != null) {
+            WzProperty act0 = questAct.get("0");
+            WzProperty act1 = questAct.get("1");
+            List<QuestAct> resolved0 = act0 != null ? resolveQuestActs(questId, act0) : List.of();
+            List<QuestAct> resolved1 = act1 != null ? resolveQuestActs(questId, act1) : List.of();
+
+            boolean hasAnyActs = !resolved0.isEmpty() || !resolved1.isEmpty();
+
+            if (hasAnyActs) {
+                questActs0 = resolved0;
+                questActs1 = resolved1;
+
+                if (act1 != null) {
+                    nextQuest = WzProvider.getInteger(act1.getItems().getOrDefault("nextQuest", 0));
                 }
             }
         }
-        // extract nextQuest from Act.img/%d/1
-        final int nextQuest = WzProvider.getInteger(((WzProperty) questAct.get("1")).getItems().get("nextQuest"), 0);
+
+        List<QuestCheck> questChecks0 =
+                questCheck != null && questCheck.get("0") != null
+                        ? resolveQuestChecks(questId, questCheck.get("0"))
+                        : List.of();
+
+        List<QuestCheck> questChecks1 =
+                questCheck != null && questCheck.get("1") != null
+                        ? resolveQuestChecks(questId, questCheck.get("1"))
+                        : List.of();
+
         return new QuestInfo(
                 questId,
                 questName,
@@ -311,10 +350,10 @@ public final class QuestInfo {
                 nextQuest,
                 autoStart,
                 autoComplete,
-                Collections.unmodifiableList(resolveQuestActs(questId, questAct.get("0"))),
-                Collections.unmodifiableList(resolveQuestActs(questId, questAct.get("1"))),
-                Collections.unmodifiableList(resolveQuestChecks(questId, questCheck.get("0"))),
-                Collections.unmodifiableList(resolveQuestChecks(questId, questCheck.get("1")))
+                questActs0,
+                questActs1,
+                questChecks0,
+                questChecks1
         );
     }
 
@@ -347,16 +386,16 @@ public final class QuestInfo {
                 case "info" -> {
                     questActs.add(new QuestInfoAct(questId, WzProvider.getString(entry.getValue())));
                 }
-                case "skill" -> {
-                    if (!(entry.getValue() instanceof WzProperty skillList)) {
-                        throw new ProviderError("Failed to resolve quest act skill list");
-                    }
-                    if (questId == 6034) {
-                        // What Moren Dropped
-                        continue;
-                    }
-                    questActs.add(QuestSkillAct.from(skillList));
-                }
+//                case "skill" -> {
+//                    if (!(entry.getValue() instanceof WzProperty skillList)) {
+//                        throw new ProviderError("Failed to resolve quest act skill list");
+//                    }
+//                    if (questId == 6034) {
+//                        // What Moren Dropped
+//                        continue;
+//                    }
+//                    questActs.add(QuestSkillAct.from(skillList));
+//                }
                 case "buffItemID" -> {
                     questActs.add(new QuestBuffAct(WzProvider.getInteger(entry.getValue())));
                 }
@@ -396,10 +435,6 @@ public final class QuestInfo {
                         throw new ProviderError("Failed to resolve quest check job list");
                     }
                     questChecks.add(QuestJobCheck.from(jobList));
-                }
-                case "subJobFlags" -> {
-                    final int subJobFlags = WzProvider.getInteger(entry.getValue());
-                    questChecks.add(new QuestSubJobCheck(subJobFlags));
                 }
                 case "skill" -> {
                     if (!(entry.getValue() instanceof WzProperty skillList)) {

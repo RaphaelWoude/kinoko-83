@@ -160,16 +160,16 @@ public final class Pirate extends SkillProcessor {
         final Field field = user.getField();
         switch (skillId) {
             // COMMON
-            case ROLL_OF_THE_DICE_BUCC:
-            case ROLL_OF_THE_DICE_SAIR:
-                final int roll = Util.getRandom(1, 6);
-                user.write(UserLocal.effect(Effect.skillAffectedSelect(roll, skillId, slv)));
-                field.broadcastPacket(UserRemote.effect(user, Effect.skillAffectedSelect(roll, skillId, slv)), user);
-                if (roll != 1) {
-                    final DiceInfo diceInfo = DiceInfo.from(roll, si, slv);
-                    user.setTemporaryStat(CharacterTemporaryStat.Dice, TemporaryStatOption.ofDice(roll, skillId, si.getDuration(slv), diceInfo));
-                }
-                return;
+//            case ROLL_OF_THE_DICE_BUCC:
+//            case ROLL_OF_THE_DICE_SAIR:
+//                final int roll = Util.getRandom(1, 6);
+//                user.write(UserLocal.effect(Effect.skillAffectedSelect(roll, skillId, slv)));
+//                field.broadcastPacket(UserRemote.effect(user, Effect.skillAffectedSelect(roll, skillId, slv)), user);
+//                if (roll != 1) {
+//                    final DiceInfo diceInfo = DiceInfo.from(roll, si, slv);
+//                    user.setTemporaryStat(CharacterTemporaryStat.Dice, TemporaryStatOption.ofDice(roll, skillId, si.getDuration(slv), diceInfo));
+//                }
+//                return;
 
             // BUCC
             case MP_RECOVERY:

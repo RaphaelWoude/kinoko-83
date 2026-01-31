@@ -5,7 +5,6 @@ import kinoko.packet.user.UserRemote;
 import kinoko.provider.SkillProvider;
 import kinoko.provider.skill.SkillInfo;
 import kinoko.provider.skill.SkillStat;
-import kinoko.util.Rect;
 import kinoko.util.Util;
 import kinoko.world.field.Field;
 import kinoko.world.field.mob.BurnedInfo;
@@ -21,11 +20,6 @@ import kinoko.world.job.Job;
 import kinoko.world.job.cygnus.*;
 import kinoko.world.job.explorer.*;
 import kinoko.world.job.legend.Aran;
-import kinoko.world.job.legend.Evan;
-import kinoko.world.job.resistance.BattleMage;
-import kinoko.world.job.resistance.Citizen;
-import kinoko.world.job.resistance.Mechanic;
-import kinoko.world.job.resistance.WildHunter;
 import kinoko.world.user.User;
 import kinoko.world.user.effect.Effect;
 import kinoko.world.user.stat.CharacterTemporaryStat;
@@ -37,7 +31,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 public abstract class SkillProcessor {
     protected static final Logger log = LogManager.getLogger(SkillProcessor.class);
@@ -75,11 +68,6 @@ public abstract class SkillProcessor {
             case Magician.TELEPORT_MASTERY_FP:
             case Magician.TELEPORT_MASTERY_IL:
             case Magician.TELEPORT_MASTERY_BISH:
-            case BattleMage.TELEPORT_MASTERY:
-                if (!mob.isBoss() && Util.succeedProp(si.getValue(SkillStat.subProp, slv))) {
-                    mob.setTemporaryStat(MobTemporaryStat.Stun, MobStatOption.of(1, skillId, si.getDuration(slv)), delay);
-                }
-                return;
             case Thief.DISORDER:
             case NightWalker.DISORDER:
                 if (!mob.isBoss()) {
@@ -126,18 +114,6 @@ public abstract class SkillProcessor {
             case ARAN_1, ARAN_2, ARAN_3, ARAN_4 -> {
                 Aran.handleAttack(user, mob, attack, delay);
             }
-            case EVAN_1, EVAN_2, EVAN_3, EVAN_4, EVAN_5, EVAN_6, EVAN_7, EVAN_8, EVAN_9, EVAN_10 -> {
-                Evan.handleAttack(user, mob, attack, delay);
-            }
-            case BATTLE_MAGE_1, BATTLE_MAGE_2, BATTLE_MAGE_3, BATTLE_MAGE_4 -> {
-                BattleMage.handleAttack(user, mob, attack, delay);
-            }
-            case WILD_HUNTER_1, WILD_HUNTER_2, WILD_HUNTER_3, WILD_HUNTER_4 -> {
-                WildHunter.handleAttack(user, mob, attack, delay);
-            }
-            case MECHANIC_1, MECHANIC_2, MECHANIC_3, MECHANIC_4 -> {
-                Mechanic.handleAttack(user, mob, attack, delay);
-            }
         }
     }
 
@@ -155,50 +131,18 @@ public abstract class SkillProcessor {
             case Beginner.RECOVERY:
             case Noblesse.RECOVERY:
             case Aran.RECOVERY:
-            case Evan.RECOVER:
-                user.setTemporaryStat(CharacterTemporaryStat.Regen, TemporaryStatOption.of(si.getValue(SkillStat.x, slv), skillId, si.getDuration(slv)));
-                user.setSchedule(skillId, Instant.now().plus(5, ChronoUnit.SECONDS));
-                return;
             case Beginner.NIMBLE_FEET:
             case Noblesse.NIMBLE_FEET:
             case Aran.AGILE_BODY:
-            case Evan.NIMBLE_FEET:
-                user.setTemporaryStat(CharacterTemporaryStat.Speed, TemporaryStatOption.of(si.getValue(SkillStat.speed, slv), skillId, si.getDuration(slv)));
-                return;
             case Beginner.MONSTER_RIDER:
             case Noblesse.MONSTER_RIDER:
             case Aran.MONSTER_RIDER:
-            case Evan.MONSTER_RIDER:
-                final Item tamingMobItem = user.getInventoryManager().getEquipped().getItem(BodyPart.TAMINGMOB.getValue());
-                if (tamingMobItem == null) {
-                    log.error("Tried to use Monster Rider skill without a taming mob");
-                    return;
-                }
-                user.setTemporaryStat(CharacterTemporaryStat.RideVehicle, TemporaryStatOption.ofTwoState(CharacterTemporaryStat.RideVehicle, tamingMobItem.getItemId(), skillId, 0));
-                return;
             case Beginner.SOARING:
             case Noblesse.SOARING:
             case Aran.SOARING:
-            case Evan.SOARING:
-            case Citizen.SOARING:
-                if (!user.getField().getMapInfo().isFly()) {
-                    log.error("Tried to use Soaring skill outside of a flying map");
-                    return;
-                }
-                user.setTemporaryStat(CharacterTemporaryStat.Flying, TemporaryStatOption.of(1, skillId, 0));
-                return;
             case Beginner.ECHO_OF_HERO:
             case Noblesse.ECHO_OF_HERO:
             case Aran.ECHO_OF_HERO:
-            case Evan.HEROS_ECHO:
-            case Citizen.HEROS_ECHO:
-                user.setTemporaryStat(CharacterTemporaryStat.MaxLevelBuff, TemporaryStatOption.of(si.getValue(SkillStat.x, slv), skillId, si.getDuration(slv)));
-                skill.forEachAffectedUser(field, (other) -> {
-                    other.setTemporaryStat(CharacterTemporaryStat.MaxLevelBuff, TemporaryStatOption.of(si.getValue(SkillStat.x, slv), skillId, si.getDuration(slv)));
-                    other.write(UserLocal.effect(Effect.skillAffected(skill.skillId, skill.slv)));
-                    field.broadcastPacket(UserRemote.effect(other, Effect.skillAffected(skill.skillId, skill.slv)), other);
-                });
-                return;
 
             // COPY SKILLS ---------------------------------------------------------------------------------------------
             case Warrior.IRON_BODY:
@@ -215,9 +159,6 @@ public abstract class SkillProcessor {
                 return;
             case Magician.MAGIC_GUARD:
             case BlazeWizard.MAGIC_GUARD:
-            case Evan.MAGIC_GUARD:
-                user.setTemporaryStat(CharacterTemporaryStat.MagicGuard, TemporaryStatOption.of(si.getValue(SkillStat.x, slv), skillId, getBuffedDuration(user, si.getDuration(slv))));
-                return;
             case Magician.MAGIC_ARMOR:
             case BlazeWizard.MAGIC_ARMOR:
                 user.setTemporaryStat(Map.of(
@@ -252,15 +193,9 @@ public abstract class SkillProcessor {
             case Magician.TELEPORT_MASTERY_FP:
             case Magician.TELEPORT_MASTERY_IL:
             case Magician.TELEPORT_MASTERY_BISH:
-            case BattleMage.TELEPORT_MASTERY:
-                user.setTemporaryStat(CharacterTemporaryStat.TeleportMasteryOn, TemporaryStatOption.of(si.getValue(SkillStat.y, slv), skillId, 0));
-                return;
             case Magician.ELEMENTAL_DECREASE_FP:
             case Magician.ELEMENTAL_DECREASE_IL:
             case BlazeWizard.ELEMENTAL_RESET:
-            case Evan.ELEMENTAL_RESET:
-                user.setTemporaryStat(CharacterTemporaryStat.ElementalReset, TemporaryStatOption.of(si.getValue(SkillStat.x, slv), skillId, getBuffedDuration(user, si.getDuration(slv))));
-                return;
             case Magician.IFRIT:
             case Magician.ELQUINES:
             case Magician.BAHAMUT:
@@ -284,9 +219,6 @@ public abstract class SkillProcessor {
             case Bowman.SOUL_ARROW_BM:
             case Bowman.SOUL_ARROW_MM:
             case WindArcher.SOUL_ARROW:
-            case WildHunter.SOUL_ARROW_WH:
-                user.setTemporaryStat(CharacterTemporaryStat.SoulArrow, TemporaryStatOption.of(1, skillId, si.getDuration(slv)));
-                return;
             case Bowman.PUPPET_BM:
             case Bowman.PUPPET_MM:
             case WindArcher.PUPPET:
@@ -369,13 +301,6 @@ public abstract class SkillProcessor {
             case BlazeWizard.TELEPORT:
             case NightWalker.FLASH_JUMP:
             case Aran.COMBAT_STEP:
-            case Evan.TELEPORT:
-            case BattleMage.TELEPORT:
-            case WildHunter.JAG_JUMP:
-            case Mechanic.ROCKET_BOOSTER:
-            case Citizen.MECHANIC_DASH:
-                // noop
-                return;
             case Warrior.WEAPON_BOOSTER_HERO:
             case Warrior.WEAPON_BOOSTER_PALADIN:
             case Warrior.WEAPON_BOOSTER_DRK:
@@ -394,12 +319,6 @@ public abstract class SkillProcessor {
             case NightWalker.CLAW_BOOSTER:
             case ThunderBreaker.KNUCKLE_BOOSTER:
             case Aran.POLEARM_BOOSTER:
-            case Evan.MAGIC_BOOSTER:
-            case BattleMage.STAFF_BOOST:
-            case WildHunter.CROSSBOW_BOOSTER:
-            case Mechanic.MECHANIC_RAGE:
-                user.setTemporaryStat(CharacterTemporaryStat.Booster, TemporaryStatOption.of(si.getValue(SkillStat.x, slv), skillId, si.getDuration(slv)));
-                return;
             case Warrior.MAPLE_WARRIOR_HERO:
             case Warrior.MAPLE_WARRIOR_PALADIN:
             case Warrior.MAPLE_WARRIOR_DRK:
@@ -414,12 +333,6 @@ public abstract class SkillProcessor {
             case Pirate.MAPLE_WARRIOR_BUCC:
             case Pirate.MAPLE_WARRIOR_SAIR:
             case Aran.MAPLE_WARRIOR_ARAN:
-            case Evan.MAPLE_WARRIOR_EVAN:
-            case BattleMage.MAPLE_WARRIOR_BAM:
-            case WildHunter.MAPLE_WARRIOR_WH:
-            case Mechanic.MAPLE_WARRIOR_MECH:
-                user.setTemporaryStat(CharacterTemporaryStat.BasicStatUp, TemporaryStatOption.of(si.getValue(SkillStat.x, slv), skillId, si.getDuration(slv)));
-                return;
             case Warrior.HEROS_WILL_HERO:
             case Warrior.HEROS_WILL_PALADIN:
             case Warrior.HEROS_WILL_DRK:
@@ -434,32 +347,11 @@ public abstract class SkillProcessor {
             case Pirate.PIRATES_RAGE:
             case Pirate.HEROS_WILL_SAIR:
             case Aran.HEROS_WILL_ARAN:
-            case Evan.HEROS_WILL_EVAN:
-            case BattleMage.HEROS_WILL_BAM:
-            case WildHunter.HEROS_WILL_WH:
-            case Mechanic.HEROS_WILL_MECH:
-                user.resetTemporaryStat(Set.of(
-                        CharacterTemporaryStat.Poison,
-                        CharacterTemporaryStat.Seal,
-                        CharacterTemporaryStat.Darkness,
-                        CharacterTemporaryStat.Weakness,
-                        CharacterTemporaryStat.Curse,
-                        CharacterTemporaryStat.Slow,
-                        CharacterTemporaryStat.Attract,
-                        CharacterTemporaryStat.ReverseInput,
-                        CharacterTemporaryStat.StopPortion,
-                        CharacterTemporaryStat.StopMotion,
-                        CharacterTemporaryStat.Undead
-                ));
-                return;
         }
 
         // CLASS SPECIFIC SKILLS ---------------------------------------------------------------------------------------
         final int skillRoot = SkillConstants.getSkillRoot(skill.skillId);
         switch (Job.getById(skillRoot)) {
-            case CITIZEN -> {
-                Citizen.handleSkill(user, skill);
-            }
             case WARRIOR, FIGHTER, CRUSADER, HERO, PAGE, WHITE_KNIGHT, PALADIN, SPEARMAN, DRAGON_KNIGHT, DARK_KNIGHT -> {
                 Warrior.handleSkill(user, skill);
             }
@@ -493,18 +385,6 @@ public abstract class SkillProcessor {
             case ARAN_1, ARAN_2, ARAN_3, ARAN_4 -> {
                 Aran.handleSkill(user, skill);
             }
-            case EVAN_1, EVAN_2, EVAN_3, EVAN_4, EVAN_5, EVAN_6, EVAN_7, EVAN_8, EVAN_9, EVAN_10 -> {
-                Evan.handleSkill(user, skill);
-            }
-            case BATTLE_MAGE_1, BATTLE_MAGE_2, BATTLE_MAGE_3, BATTLE_MAGE_4 -> {
-                BattleMage.handleSkill(user, skill);
-            }
-            case WILD_HUNTER_1, WILD_HUNTER_2, WILD_HUNTER_3, WILD_HUNTER_4 -> {
-                WildHunter.handleSkill(user, skill);
-            }
-            case MECHANIC_1, MECHANIC_2, MECHANIC_3, MECHANIC_4 -> {
-                Mechanic.handleSkill(user, skill);
-            }
             default -> {
                 log.error("Unhandled skill {}", skill.skillId);
             }
@@ -531,8 +411,6 @@ public abstract class SkillProcessor {
         handleRecovery(user, now);
         handleDragonBlood(user, now);
         handleInfinity(user, now);
-        handleAura(user, now);
-        handleMissileTank(user, now);
     }
 
     private static void handleRecovery(User user, Instant now) {
@@ -590,63 +468,6 @@ public abstract class SkillProcessor {
             final int damage = si.getValue(SkillStat.damage, slv);
             user.setTemporaryStat(CharacterTemporaryStat.Infinity, option.update(option.nOption + damage));
             user.setSchedule(skillId, now.plus(4, ChronoUnit.SECONDS));
-        }
-    }
-
-    private static void handleAura(User user, Instant now) {
-        if (!user.getSecondaryStat().hasOption(CharacterTemporaryStat.Aura)) {
-            return;
-        }
-        final TemporaryStatOption option = user.getSecondaryStat().getOption(CharacterTemporaryStat.Aura);
-        final int skillId = BattleMage.getAdvancedAuraSkill(user, option.rOption);
-        final int slv = user.getSkillLevel(skillId);
-        if (now.isAfter(user.getSchedule(option.rOption))) {
-            final CharacterTemporaryStat cts = SkillConstants.getStatByAuraSkill(skillId);
-            if (cts == null) {
-                log.error("Could not resolve CTS for aura skill ID : {}", skillId);
-                return;
-            }
-            final Optional<SkillInfo> skillInfoResult = SkillProvider.getSkillInfoById(skillId);
-            if (skillInfoResult.isEmpty()) {
-                log.error("Could not resolve skill info for aura skill ID : {}", skillId);
-                return;
-            }
-            final SkillInfo si = skillInfoResult.get();
-            final Rect rect = user.getRelativeRect(si.getRect(slv));
-            final int x = (cts == CharacterTemporaryStat.DarkAura ? si.getValue(SkillStat.x, slv) : slv);
-            // Apply aura buff to self
-            if (!user.getSecondaryStat().hasOption(cts)) {
-                user.setTemporaryStat(cts, TemporaryStatOption.of(x, skillId, 0));
-            }
-            // Apply aura buff to party members
-            user.getField().getUserPool().forEachPartyMember(user, (member) -> {
-                if (rect.isInsideRect(member.getX(), member.getY())) {
-                    if (!member.getSecondaryStat().hasOption(cts)) {
-                        member.setTemporaryStat(cts, TemporaryStatOption.of(x, skillId, 0));
-                    }
-                } else {
-                    if (member.getSecondaryStat().hasOption(cts)) {
-                        member.resetTemporaryStat(Set.of(cts));
-                    }
-                }
-            });
-            // Set next schedule
-            user.setSchedule(option.rOption, now.plus(1, ChronoUnit.SECONDS));
-        }
-    }
-
-    private static void handleMissileTank(User user, Instant now) {
-        if (!user.getSecondaryStat().hasOption(CharacterTemporaryStat.Mechanic)) {
-            return;
-        }
-        final int skillId = user.getSecondaryStat().getOption(CharacterTemporaryStat.Mechanic).rOption;
-        if (skillId != Mechanic.MECH_MISSILE_TANK) {
-            return;
-        }
-        if (now.isAfter(user.getSchedule(skillId))) {
-            user.addMp(-user.getSkillStatValue(skillId, SkillStat.u));
-            // Set next schedule
-            user.setSchedule(skillId, now.plus(5, ChronoUnit.SECONDS));
         }
     }
 }

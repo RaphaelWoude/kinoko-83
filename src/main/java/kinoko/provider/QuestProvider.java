@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.reflections.Reflections.log;
+
 public final class QuestProvider implements WzProvider {
     public static final Path QUEST_WZ = Path.of(ServerConfig.WZ_DIRECTORY, "Quest.wz");
     private static final Map<Integer, QuestInfo> questInfos = new HashMap<>();

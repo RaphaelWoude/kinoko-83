@@ -5,11 +5,14 @@ import kinoko.util.Encodable;
 import kinoko.util.Util;
 import kinoko.world.GameConstants;
 import kinoko.world.job.JobConstants;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.EnumMap;
 import java.util.Map;
 
 public final class CharacterStat implements Encodable {
+    private static final Logger log = LoggerFactory.getLogger(CharacterStat.class);
     private int id;
     private String name;
     private byte gender;
@@ -18,7 +21,6 @@ public final class CharacterStat implements Encodable {
     private int hair;
     private short level; // encoded as unsigned byte
     private short job;
-    private short subJob;
     private short baseStr;
     private short baseDex;
     private short baseInt;
@@ -99,14 +101,6 @@ public final class CharacterStat implements Encodable {
 
     public void setJob(short job) {
         this.job = job;
-    }
-
-    public short getSubJob() {
-        return subJob;
-    }
-
-    public void setSubJob(short subJob) {
-        this.subJob = subJob;
     }
 
     public short getBaseStr() {
@@ -342,7 +336,7 @@ public final class CharacterStat implements Encodable {
         return statMap;
     }
 
-    public Map<Stat, Object> addExp(int delta, int totalInt) {
+    public Map<Stat, Object> addExp(int delta) {
         final Map<Stat, Object> statMap = new EnumMap<>(Stat.class);
         if (getLevel() >= GameConstants.getLevelMax(job)) {
             return statMap;
@@ -350,29 +344,47 @@ public final class CharacterStat implements Encodable {
         long newExp = ((long) getExp()) + delta;
         while (getLevel() < GameConstants.getLevelMax(job) && newExp >= GameConstants.getNextLevelExp(getLevel())) {
             newExp -= GameConstants.getNextLevelExp(getLevel());
-            statMap.putAll(levelUp(totalInt));
+            statMap.putAll(addLevelUp());
         }
         setExp((int) newExp);
         statMap.put(Stat.EXP, (int) newExp);
         return statMap;
     }
 
-    public Map<Stat, Object> levelUp(int totalInt) {
+    public Map<Stat, Object> addLevelUp() {
         final Map<Stat, Object> statMap = new EnumMap<>(Stat.class);
         if (getLevel() >= GameConstants.getLevelMax(job)) {
             return statMap;
         }
+
         // Update level
         setLevel((short) (getLevel() + 1));
         statMap.put(Stat.LEVEL, (byte) getLevel());
+
+        return statMap;
+    }
+
+    public Map<Stat, Object> addLevelUpStats(int totalInt) {
+        final Map<Stat, Object> statMap = new EnumMap<>(Stat.class);
+
         // Update max hp
         final int incHp = StatConstants.getIncHp(getJob()) + Util.getRandom(StatConstants.INC_HP_VARIANCE);
         setMaxHp(Math.min(getMaxHp() + incHp, GameConstants.HP_MAX));
         statMap.put(Stat.MHP, getMaxHp());
+
+        // Update hp. Can't update HP as the client will crash.
+        // setHp(Math.min(getMaxHp(), GameConstants.HP_MAX));
+        // statMap.put(Stat.HP, getMaxHp());
+
         // Update max mp
         final int incMp = StatConstants.getIncMp(getJob()) + Util.getRandom(StatConstants.INC_MP_VARIANCE) + (totalInt / 10);
         setMaxMp(Math.min(getMaxMp() + incMp, GameConstants.MP_MAX));
         statMap.put(Stat.MMP, getMaxMp());
+
+        // Update mp
+        setMp(Math.min(getMaxMp(), GameConstants.MP_MAX));
+        statMap.put(Stat.MP, getMaxMp());
+
         // Update ap (auto distribution for beginners)
         if (JobConstants.isBeginnerJob(getJob()) && getLevel() <= 11) {
             if (getLevel() <= 6) {
@@ -390,15 +402,10 @@ public final class CharacterStat implements Encodable {
         }
         // Update sp
         if (!JobConstants.isBeginnerJob(getJob())) {
-            if (JobConstants.isExtendSpJob(getJob())) {
-                final int jobLevel = JobConstants.getExtendSpJobLevel(getJob(), getLevel());
-                getSp().addSp(jobLevel, 3);
-                statMap.put(Stat.SP, getSp());
-            } else {
-                getSp().addNonExtendSp(3);
-                statMap.put(Stat.SP, (short) getSp().getNonExtendSp());
-            }
+            getSp().addNonExtendSp(3);
+            statMap.put(Stat.SP, (short) getSp().getNonExtendSp());
         }
+
         return statMap;
     }
 
@@ -430,23 +437,17 @@ public final class CharacterStat implements Encodable {
         outPacket.encodeShort(baseDex); // nDEX
         outPacket.encodeShort(baseInt); // nINT
         outPacket.encodeShort(baseLuk); // nLUK
-        outPacket.encodeInt(hp); // nHP
-        outPacket.encodeInt(maxHp); // nMHP
-        outPacket.encodeInt(mp); // nMP
-        outPacket.encodeInt(maxMp); // nMMP
+        outPacket.encodeShort(hp); // nHP
+        outPacket.encodeShort(maxHp); // nMHP
+        outPacket.encodeShort(mp); // nMP
+        outPacket.encodeShort(maxMp); // nMMP
         outPacket.encodeShort(ap); // nAP
-        if (JobConstants.isExtendSpJob(job)) {
-            sp.encode(outPacket);
-        } else {
-            outPacket.encodeShort((short) sp.getNonExtendSp());
-        }
-
+        outPacket.encodeShort((short) sp.getNonExtendSp());
         outPacket.encodeInt(exp); // nEXP
         outPacket.encodeShort(pop); // nPOP
         outPacket.encodeInt(0); // nTempEXP
         outPacket.encodeInt(posMap); // dwPosMap
         outPacket.encodeByte(portal); // nPortal
         outPacket.encodeInt(0); // nPlayTime
-        outPacket.encodeShort(subJob); // nSubJob
     }
 }

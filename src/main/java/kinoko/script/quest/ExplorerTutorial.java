@@ -445,15 +445,14 @@ public final class ExplorerTutorial extends ScriptHandler {
         if (!sm.askAccept("So..... Let me just do this for fun! Abaracadabra~!")) {
             return;
         }
-        user.setHp(25);
-        sm.sayNext("Surprised? If HP becomes 0, then you are in trouble. Now, I will give you  #rRoger's Apple#k. Please take it. You will feel stronger. Open the item window and double click to consume. Hey, It's very simple to open the item window. Just press #bI#k on your keyboard.");
-        sm.sayBoth("Please take all Roger's Apples that I gave you. You will be able to see the HP bar increasing right away. Please talk to me again when you recover your HP 100%.");
         if (!sm.hasItem(2010007) && !sm.addItem(2010007, 1)) {
             sm.sayNext("Please check if your inventory is full or not.");
-            return;
         }
         sm.forceStartQuest(1021);
         sm.avatarOriented("UI/tutorial.img/28");
+        user.setHp(25);
+        sm.sayNext("Surprised? If HP becomes 0, then you are in trouble. Now, I will give you  #rRoger's Apple#k. Please take it. You will feel stronger. Open the item window and double click to consume. Hey, It's very simple to open the item window. Just press #bI#k on your keyboard.");
+        sm.sayBoth("Please take all Roger's Apples that I gave you. You will be able to see the HP bar increasing right away. Please talk to me again when you recover your HP 100%.");
     }
 
     @Script("q1021e")
@@ -466,7 +465,7 @@ public final class ExplorerTutorial extends ScriptHandler {
         }
         sm.sayNext("How easy is it to consume the item? Simple, right? You can set a #bhotkey#k on the right bottom slot. Haha you didn't know that! right? Oh, and if you are a beginner, HP will automatically recover itself as time goes by. Well it takes time but this is one of the strategies for the beginners.");
         sm.sayBoth("Alright! Now that you have learned alot, I will give you a present. This is a must for your travel in Maple World, so thank me! Please use this under emergency cases!");
-        sm.sayBoth("Okay, this is all I can teach you. I know it's sad but it is time to say good bye. Well take care of yourself and Good luck my friend!\r\n\r\n#fUI/UIWindow2.img/QuestIcon/4/0#\r\n#i2010000# 3 #t2010000#\r\n#i2010009# 3 #t2010009#\r\n\r\n#fUI/UIWindow2.img/QuestIcon/8/0# 10 exp");
+        sm.sayBoth("Okay, this is all I can teach you. I know it's sad but it is time to say good bye. Well take care of yourself and Good luck my friend!\r\n\r\n#fUI/UIWindow.img/QuestIcon/4/0#\r\n#i2010000# 3 #t2010000#\r\n#i2010009# 3 #t2010009#\r\n\r\n#fUI/UIWindow.img/QuestIcon/8/0# 10 exp");
         if (!sm.addItems(List.of(
                 Tuple.of(2010000, 3), // Apple
                 Tuple.of(2010009, 3) // Green Apple

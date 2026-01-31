@@ -18,10 +18,9 @@ import java.util.*;
 public final class ItemProvider implements WzProvider {
     public static final Path CHARACTER_WZ = Path.of(ServerConfig.WZ_DIRECTORY, "Character.wz");
     public static final Path ITEM_WZ = Path.of(ServerConfig.WZ_DIRECTORY, "Item.wz");
-    public static final List<String> EQUIP_TYPES = List.of("Accessory", "Cap", "Cape", "Coat", "Dragon", "Face", "Glove", "Hair", "Longcoat", "Mechanic", "Pants", "PetEquip", "Ring", "Shield", "Shoes", "TamingMob", "Weapon");
+    public static final List<String> EQUIP_TYPES = List.of("Accessory", "Cap", "Cape", "Coat", "Dragon", "Face", "Glove", "Hair", "Longcoat", "Pants", "PetEquip", "Ring", "Shield", "Shoes", "TamingMob", "Weapon");
     public static final List<String> ITEM_TYPES = List.of("Consume", "Install", "Etc", "Cash");
     private static final Map<Integer, ItemInfo> itemInfos = new HashMap<>();
-    private static final Map<Integer, ItemOptionInfo> itemOptionInfos = new HashMap<>(); // item option id -> item option info
     private static final Map<Integer, ItemRewardInfo> itemRewardInfos = new HashMap<>();
     private static final Map<Integer, MobSummonInfo> mobSummonInfos = new HashMap<>();
     private static final Map<Integer, Set<Integer>> petEquips = new HashMap<>(); // petEquipId -> set<petTemplateId>
@@ -38,7 +37,6 @@ public final class ItemProvider implements WzProvider {
         // Item.wz
         try (final WzPackage source = WzPackage.from(ITEM_WZ)) {
             loadItemInfos(source);
-            loadItemOptionInfos(source);
             loadItemNames(source);
         } catch (IOException | ProviderError e) {
             throw new IllegalArgumentException("Exception caught while loading Item.wz", e);
@@ -53,13 +51,6 @@ public final class ItemProvider implements WzProvider {
         return Optional.ofNullable(itemInfos.get(itemId));
     }
 
-    public static Optional<ItemOptionLevelData> getItemOptionInfo(int itemOptionId, int optionLevel) {
-        if (!itemOptionInfos.containsKey(itemOptionId)) {
-            return Optional.empty();
-        }
-        return itemOptionInfos.get(itemOptionId).getLevelData(optionLevel);
-    }
-
     public static List<ItemOptionInfo> getPossibleItemOptions(ItemInfo itemInfo, ItemGrade itemGrade) {
         final Optional<BodyPart> bodyPartResult = BodyPart.getByItemId(itemInfo.getItemId()).stream().findFirst();
         if (bodyPartResult.isEmpty()) {
@@ -67,17 +58,7 @@ public final class ItemProvider implements WzProvider {
         }
         final BodyPart bodyPart = bodyPartResult.get();
         final int reqLevel = itemInfo.getReqLevel();
-        final List<ItemOptionInfo> possibleItemOptions = new ArrayList<>();
-        for (ItemOptionInfo itemOptionInfo : itemOptionInfos.values()) {
-            // Skip special options
-            if (ItemOption.isSpecialOption(itemOptionInfo.getItemOptionId())) {
-                continue;
-            }
-            // Check if option matches target item
-            if (itemOptionInfo.isMatchingGrade(itemGrade) && itemOptionInfo.isMatchingLevel(reqLevel) && itemOptionInfo.isMatchingType(bodyPart)) {
-                possibleItemOptions.add(itemOptionInfo);
-            }
-        }
+        final List<ItemOptionInfo> possibleItemOptions = new ArrayList<>(); // Todo: Do we still need this?
         return possibleItemOptions;
     }
 
@@ -176,19 +157,6 @@ public final class ItemProvider implements WzProvider {
                 actions.put(action, interaction);
             }
             petActions.put(itemId, Collections.unmodifiableMap(actions));
-        }
-    }
-
-    private static void loadItemOptionInfos(WzPackage source) throws ProviderError {
-        if (!((WzImage) source.getItem("ItemOption.img") instanceof WzImage itemOptionImage)) {
-            throw new ProviderError("Could not resolve Item.wz/ItemOption.img");
-        }
-        for (var entry : itemOptionImage.getItems().entrySet()) {
-            final int itemOptionId = Integer.parseInt(entry.getKey());
-            if (!(entry.getValue() instanceof WzProperty itemOptionProp)) {
-                throw new ProviderError("Failed to resolve item option prop");
-            }
-            itemOptionInfos.put(itemOptionId, ItemOptionInfo.from(itemOptionId, itemOptionProp));
         }
     }
 

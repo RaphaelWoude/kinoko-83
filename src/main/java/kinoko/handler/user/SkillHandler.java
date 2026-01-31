@@ -15,17 +15,11 @@ import kinoko.server.header.InHeader;
 import kinoko.server.packet.InPacket;
 import kinoko.util.BitFlag;
 import kinoko.world.field.Field;
-import kinoko.world.field.mob.Mob;
 import kinoko.world.item.*;
 import kinoko.world.job.JobConstants;
 import kinoko.world.job.explorer.Magician;
 import kinoko.world.job.explorer.Thief;
 import kinoko.world.job.explorer.Warrior;
-import kinoko.world.job.legend.Evan;
-import kinoko.world.job.resistance.BattleMage;
-import kinoko.world.job.resistance.Citizen;
-import kinoko.world.job.resistance.Mechanic;
-import kinoko.world.job.resistance.WildHunter;
 import kinoko.world.skill.Skill;
 import kinoko.world.skill.SkillConstants;
 import kinoko.world.skill.SkillProcessor;
@@ -33,7 +27,6 @@ import kinoko.world.user.User;
 import kinoko.world.user.effect.Effect;
 import kinoko.world.user.stat.CharacterTemporaryStat;
 import kinoko.world.user.stat.SecondaryStat;
-import kinoko.world.user.stat.TemporaryStatOption;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -54,22 +47,6 @@ public final class SkillHandler {
         skill.skillId = inPacket.decodeInt(); // nSkillID
         skill.slv = inPacket.decodeByte(); // nSLV
 
-        if (skill.skillId == Mechanic.ROCK_N_SHOCK) {
-            // CUserLocal::DoActiveSkill_Summon
-            skill.rockAndShockCount = inPacket.decodeByte();
-            if (skill.rockAndShockCount == 2) {
-                skill.rockAndShock1 = inPacket.decodeInt();
-                skill.rockAndShock2 = inPacket.decodeInt();
-            }
-        }
-        if (skill.skillId == Citizen.CAPTURE) {
-            // CUserLocal::DoActiveSkill_MobCapture
-            skill.captureTargetMobId = inPacket.decodeInt();
-        }
-        if (skill.skillId == Citizen.CALL_OF_THE_HUNTER) {
-            // CUserLocal::DoActiveSkill_SummonMonster
-            skill.randomCapturedMobId = inPacket.decodeInt();
-        }
         if (SkillConstants.isEncodePositionSkill(skill.skillId)) {
             skill.positionX = inPacket.decodeShort(); // GetPos()->x
             skill.positionY = inPacket.decodeShort(); // GetPos()->y
@@ -101,7 +78,7 @@ public final class SkillHandler {
                 }
             }
         }
-        if (skill.skillId == Thief.CHAINS_OF_HELL || skill.skillId == Citizen.CALL_OF_THE_HUNTER || SkillConstants.isSummonSkill(skill.skillId)) {
+        if (skill.skillId == Thief.CHAINS_OF_HELL || SkillConstants.isSummonSkill(skill.skillId)) {
             // CUserLocal::TryDoingMonsterMagnet || CUserLocal::DoActiveSkill_SummonMonster || CUserLocal::DoActiveSkill_Summon
             skill.left = inPacket.decodeBoolean(); // nMoveAction & 1
         }
@@ -166,10 +143,6 @@ public final class SkillHandler {
         if (resetStats.contains(CharacterTemporaryStat.Beholder)) {
             user.removeSummoned((summoned) -> summoned.getSkillId() == Warrior.BEHOLDER);
         }
-        if (resetStats.contains(CharacterTemporaryStat.Aura)) {
-            user.resetTemporaryStat(CharacterTemporaryStat.AURA_STAT);
-            BattleMage.cancelPartyAura(user, skillId);
-        }
         if (resetStats.contains(CharacterTemporaryStat.SuperBody)) {
             user.resetTemporaryStat(CharacterTemporaryStat.AURA_STAT);
         }
@@ -182,60 +155,34 @@ public final class SkillHandler {
         final short actionAndDir = inPacket.decodeShort(); // nOneTimeAction & 0x7FFF | (nMoveAction << 15)
         final byte attackSpeed = inPacket.decodeByte(); // attack_speed_degree
 
-        if (skillId == WildHunter.JAGUAR_OSHI) {
-            final int mobId = inPacket.decodeInt(); // dwSwallowMobID
-            final Optional<Mob> mobResult = user.getField().getMobPool().getById(mobId);
-            if (mobResult.isEmpty()) {
-                log.error("Could not resolve swallow mob ID : {}", mobId);
-                return;
-            }
-            final Mob mob = mobResult.get();
-            // Should implement all client-side checks in CUserLocal::FindSwallowMob
-            if (mob.isBoss() || mob.getLevel() > user.getLevel() + 5 || SkillConstants.isNotSwallowableMob(mob.getTemplateId())) {
-                log.error("Tried to swallow non-swallowable mob ID : {}, template ID : {}", mobId, mob.getTemplateId());
-                return;
-            }
-            mob.setSwallowCharacterId(user.getCharacterId());
-            user.setTemporaryStat(Map.of(
-                    CharacterTemporaryStat.Swallow_Mob, TemporaryStatOption.of(mobId, skillId, 0),
-                    CharacterTemporaryStat.Swallow_Template, TemporaryStatOption.of(mob.getTemplateId(), skillId, 0)
-            ));
-        }
         user.getField().broadcastPacket(UserRemote.skillPrepare(user, skillId, slv, actionAndDir, attackSpeed), user);
     }
 
-    @Handler(InHeader.UserMovingShootAttackPrepare)
-    public static void handleMovingShootAttackPrepare(User user, InPacket inPacket) {
-        final int skillId = inPacket.decodeInt(); // nSkillID
-        final short actionAndDir = inPacket.decodeShort(); // (nMoveAction & 1) << 15 | random_shoot_attack_action & 0x7FFF
-        final byte attackSpeed = inPacket.decodeByte(); // nActionSpeed
-        final int slv = user.getSkillLevel(skillId);
-        if (slv == 0) {
-            log.error("Received UserMovingShootAttackPrepare for skill {}, but skill level is 0", skillId);
-            return;
-        }
-        user.getField().broadcastPacket(UserRemote.movingShootAttackPrepare(user, skillId, slv, actionAndDir, attackSpeed), user);
-    }
+//    @Handler(InHeader.UserMovingShootAttackPrepare)
+//    public static void handleMovingShootAttackPrepare(User user, InPacket inPacket) {
+//        final int skillId = inPacket.decodeInt(); // nSkillID
+//        final short actionAndDir = inPacket.decodeShort(); // (nMoveAction & 1) << 15 | random_shoot_attack_action & 0x7FFF
+//        final byte attackSpeed = inPacket.decodeByte(); // nActionSpeed
+//        final int slv = user.getSkillLevel(skillId);
+//        if (slv == 0) {
+//            log.error("Received UserMovingShootAttackPrepare for skill {}, but skill level is 0", skillId);
+//            return;
+//        }
+//        user.getField().broadcastPacket(UserRemote.movingShootAttackPrepare(user, skillId, slv, actionAndDir, attackSpeed), user);
+//    }
 
-    @Handler(InHeader.UserEffectLocal)
-    public static void handleUserEffectLocal(User user, InPacket inPacket) {
-        final int skillId = inPacket.decodeInt();
-        final int slv = inPacket.decodeByte();
-        final boolean sendLocal = inPacket.decodeBoolean();
-
-        final Effect effect = Effect.skillUse(skillId, slv, user.getLevel());
-        if (sendLocal) {
-            user.write(UserLocal.effect(effect));
-
-            // Not a real skill ID, but client sends this when trying to cancel Mech: Siege Mode (35111004), Mech: Missile Tank (35121005), and Mech: Siege Mode 2 (35121013)
-            if (skillId == 35110004 || skillId == 35120005 || skillId == 35120013) {
-                if (user.getSecondaryStat().hasOption(CharacterTemporaryStat.Mechanic)) {
-                    Mechanic.handleMech(user, skillId == 35120013 ? Mechanic.MECH_MISSILE_TANK : Mechanic.MECH_PROTOTYPE);
-                }
-            }
-        }
-        user.getField().broadcastPacket(UserRemote.effect(user, effect), user);
-    }
+//    @Handler(InHeader.UserEffectLocal)
+//    public static void handleUserEffectLocal(User user, InPacket inPacket) {
+//        final int skillId = inPacket.decodeInt();
+//        final int slv = inPacket.decodeByte();
+//        final boolean sendLocal = inPacket.decodeBoolean();
+//
+//        final Effect effect = Effect.skillUse(skillId, slv, user.getLevel());
+//        if (sendLocal) {
+//            user.write(UserLocal.effect(effect));
+//        }
+//        user.getField().broadcastPacket(UserRemote.effect(user, effect), user);
+//    }
 
     @Handler(InHeader.UserCalcDamageStatSetRequest)
     public static void handleUserCalcDamageStatSetRequest(User user, InPacket inPacket) {
@@ -244,7 +191,6 @@ public final class SkillHandler {
 
         // Handle effects
         Warrior.handleBerserkEffect(user);
-        Evan.handleDragonFuryEffect(user);
     }
 
     @Handler(InHeader.UserThrowGrenade)
@@ -277,12 +223,6 @@ public final class SkillHandler {
     }
 
     private static void handleSkill(User user, Skill skill) {
-        if (skill.skillId == WildHunter.JAGUAR_OSHI_DIGESTED && user.getHp() <= 0) {
-            log.error("Tried to use skill {} while dead", skill.skillId);
-            user.dispose();
-            return;
-        }
-
         // Resolve skill info
         final Optional<SkillInfo> skillInfoResult = SkillProvider.getSkillInfoById(skill.skillId);
         if (skillInfoResult.isEmpty()) {

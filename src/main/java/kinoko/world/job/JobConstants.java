@@ -15,58 +15,28 @@ public final class JobConstants {
             jobLevel = jobId % 10;
         }
         jobLevel += 2;
-        if (jobLevel >= 2 && (jobLevel <= 4 || jobLevel <= 10 && isEvanJob(jobId))) {
+        if (jobLevel >= 2 && (jobLevel <= 10)) {
             return jobLevel;
         }
         return 0;
     }
 
     public static int getExtendSpJobLevel(int jobId, int level) {
-        if (JobConstants.isEvanJob(jobId)) {
-            // is_jobchange_level_in_evan
-            if (level <= 10) {
-                return 0;
-            } else if (level <= 20) {
-                return 1;
-            } else if (level <= 30) {
-                return 2;
-            } else if (level <= 40) {
-                return 3;
-            } else if (level <= 50) {
-                return 4;
-            } else if (level <= 60) {
-                return 5;
-            } else if (level <= 80) {
-                return 6;
-            } else if (level <= 100) {
-                return 7;
-            } else if (level <= 120) {
-                return 8;
-            } else if (level <= 160) {
-                return 9;
-            } else {
-                return 10;
-            }
+        if (level <= 10) {
+            return 0;
+        } else if (level <= 30) {
+            return 1;
+        } else if (level <= 70) {
+            return 2;
+        } else if (level <= 120) {
+            return 3;
         } else {
-            if (level <= 10) {
-                return 0;
-            } else if (level <= 30) {
-                return 1;
-            } else if (level <= 70) {
-                return 2;
-            } else if (level <= 120) {
-                return 3;
-            } else {
-                return 4;
-            }
+            return 4;
         }
     }
 
     public static int getJobChangeLevel(int jobId, int subJob, int step) {
         final int group = jobId / 1000;
-        if (isResistanceJob(jobId) || isEvanJob(jobId)) { // probably extend sp jank
-            return group != 1 ? 200 : 120;
-        }
         switch (step) {
             case 1 -> {
                 if (group == 0 && getJobCategory(jobId) == 2) {
@@ -173,14 +143,6 @@ public final class JobConstants {
         return jobId / 100 == 21 || jobId == 2000;
     }
 
-    public static boolean isEvanJob(int jobId) {
-        return jobId / 100 == 22 || jobId == 2001;
-    }
-
-    public static boolean isDragonJob(int jobId) {
-        return jobId / 100 == 22;
-    }
-
     public static boolean isDualJobBorn(int jobId, int subJob) {
         if (jobId / 1000 != 0) {
             return false;
@@ -202,26 +164,6 @@ public final class JobConstants {
 
     public static boolean isNightWalkerJob(int jobId) {
         return jobId / 100 == 14;
-    }
-
-    public static boolean isResistanceJob(int jobId) {
-        return jobId / 1000 == 3;
-    }
-
-    public static boolean isBattleMageJob(int jobId) {
-        return jobId / 100 == 32;
-    }
-
-    public static boolean isWildHunterJob(int jobId) {
-        return jobId / 100 == 33;
-    }
-
-    public static boolean isMechanicJob(int jobId) {
-        return jobId / 100 == 35;
-    }
-
-    public static boolean isExtendSpJob(int jobId) {
-        return isResistanceJob(jobId) || isEvanJob(jobId);
     }
 
     public static boolean isAdminJob(int jobId) {
@@ -257,20 +199,12 @@ public final class JobConstants {
                 }
             }
         }
-        if (isEvanJob(jobId)) {
-            jobs.add(2001);
-        } else {
-            jobs.add(1000 * (jobId / 1000));
-        }
+        jobs.add(1000 * (jobId / 1000));
         return jobs;
     }
 
     public static int getNoviceSkillRootFromJob(int jobId) {
-        if (isEvanJob(jobId)) {
-            return 2001;
-        } else {
-            return 1000 * (jobId / 1000);
-        }
+        return 1000 * (jobId / 1000);
     }
 
     public static boolean isCorrectJobForSkillRoot(int jobId, int skillRoot) {

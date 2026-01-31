@@ -171,11 +171,10 @@ public final class HitHandler {
 
         final int magicGuardReduce = getMagicGuardReduce(user, damage);
         final int magicShieldReduce = getMagicShieldReduce(user, damage);
-        final int blueAuraReduce = getBlueAuraReduce(user, damage);
 
         // Final damage
-        hitInfo.finalDamage = damage - powerGuardReduce - mesoGuardReduce - achillesReduce - comboBarrierReduce - magicGuardReduce - magicShieldReduce - blueAuraReduce;
-        log.debug("Hit delta : {} = {} - {} - {} - {} - {} - {} - {} - {}", hitInfo.finalDamage, damage, powerGuardReduce, mesoGuardReduce, achillesReduce, comboBarrierReduce, magicGuardReduce, magicShieldReduce, blueAuraReduce);
+        hitInfo.finalDamage = damage - powerGuardReduce - mesoGuardReduce - achillesReduce - comboBarrierReduce - magicGuardReduce - magicShieldReduce;
+        log.debug("Hit delta : {} = {} - {} - {} - {} - {} - {} - {}", hitInfo.finalDamage, damage, powerGuardReduce, mesoGuardReduce, achillesReduce, comboBarrierReduce, magicGuardReduce, magicShieldReduce);
 
         // Process hit damage
         if (hitInfo.finalDamage > 0) {
@@ -191,7 +190,6 @@ public final class HitHandler {
         handleDivineShield(user, hitInfo);
         handleBeholderCounter(user, hitInfo);
         handleEvasionBoost(user, hitInfo);
-        handleVengeance(user, hitInfo);
         handleDarkFlare(user, hitInfo);
         handlePiratesRevenge(user, hitInfo);
         handleBattleship(user, hitInfo);
@@ -312,23 +310,6 @@ public final class HitHandler {
         return damage * option.nOption / 100;
     }
 
-    private static int getBlueAuraReduce(User user, int damage) {
-        if (!user.getSecondaryStat().hasOption(CharacterTemporaryStat.BlueAura)) {
-            return 0;
-        }
-        final TemporaryStatOption option = user.getSecondaryStat().getOption(CharacterTemporaryStat.BlueAura);
-        final int skillId = option.rOption;
-        final int slv = option.nOption;
-        final Optional<SkillInfo> skillInfoResult = SkillProvider.getSkillInfoById(skillId);
-        if (skillInfoResult.isEmpty()) {
-            log.error("Could not resolve skill info for blue aura cts reason : {}", skillId);
-            return 0;
-        }
-        final SkillInfo si = skillInfoResult.get();
-        final int x = si.getValue(SkillStat.x, slv); // TODO distribute damage
-        return damage * x / 100;
-    }
-
     private static void handleGuardian(User user, HitInfo hitInfo) {
         if (hitInfo.knockback <= 1) {
             return;
@@ -446,16 +427,6 @@ public final class HitHandler {
         }
         if (user.getSkillLevel(Bowman.EVASION_BOOST_BM) > 0 || user.getSkillLevel(Bowman.EVASION_BOOST_MM) > 0) {
             user.getCalcDamage().setNextAttackCritical(true);
-        }
-    }
-
-    private static void handleVengeance(User user, HitInfo hitInfo) {
-        if (hitInfo.attackIndex <= AttackIndex.Counter.getValue()) {
-            return;
-        }
-        final int prop = user.getSkillStatValue(Bowman.VENGEANCE, SkillStat.prop);
-        if (prop != 0 && Util.succeedProp(prop)) {
-            user.write(UserLocal.requestVengeance());
         }
     }
 

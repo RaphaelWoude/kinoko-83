@@ -32,25 +32,25 @@ import java.util.Optional;
 public final class PetHandler {
     private static final Logger log = LogManager.getLogger(PetHandler.class);
 
-    @Handler(InHeader.UserDestroyPetItemRequest)
-    public static void handleUserDestroyPetItemRequest(User user, InPacket inPacket) {
-        inPacket.decodeInt(); // update_time
-        final long petSn = inPacket.decodeLong(); // liCashItemSN
-        final InventoryManager im = user.getInventoryManager();
-        final Optional<Tuple<Integer, Item>> itemEntryResult = im.getItemBySn(InventoryType.CASH, petSn);
-        if (itemEntryResult.isEmpty()) {
-            log.error("Tried to destroy pet item with sn {} not in inventory", petSn);
-            user.dispose();
-            return;
-        }
-        final int position = itemEntryResult.get().getLeft();
-        final Item petItem = itemEntryResult.get().getRight();
-        final Optional<InventoryOperation> removeResult = im.removeItem(position, petItem);
-        if (removeResult.isEmpty()) {
-            throw new IllegalStateException("Could not remove pet item in inventory");
-        }
-        user.write(WvsContext.inventoryOperation(removeResult.get(), true));
-    }
+//    @Handler(InHeader.UserDestroyPetItemRequest)
+//    public static void handleUserDestroyPetItemRequest(User user, InPacket inPacket) {
+//        inPacket.decodeInt(); // update_time
+//        final long petSn = inPacket.decodeLong(); // liCashItemSN
+//        final InventoryManager im = user.getInventoryManager();
+//        final Optional<Tuple<Integer, Item>> itemEntryResult = im.getItemBySn(InventoryType.CASH, petSn);
+//        if (itemEntryResult.isEmpty()) {
+//            log.error("Tried to destroy pet item with sn {} not in inventory", petSn);
+//            user.dispose();
+//            return;
+//        }
+//        final int position = itemEntryResult.get().getLeft();
+//        final Item petItem = itemEntryResult.get().getRight();
+//        final Optional<InventoryOperation> removeResult = im.removeItem(position, petItem);
+//        if (removeResult.isEmpty()) {
+//            throw new IllegalStateException("Could not remove pet item in inventory");
+//        }
+//        user.write(WvsContext.inventoryOperation(removeResult.get(), true));
+//    }
 
     @Handler(InHeader.UserActivatePetRequest)
     public static void handleUserActivatePetRequest(User user, InPacket inPacket) {
@@ -231,9 +231,6 @@ public final class PetHandler {
             return;
         }
         final byte fieldKey = inPacket.decodeByte(); // bFieldKey
-        if (user.getFieldKey() != fieldKey) {
-            return;
-        }
         inPacket.decodeInt(); // update_time
         inPacket.decodeShort(); // pt->x
         inPacket.decodeShort(); // pt->y

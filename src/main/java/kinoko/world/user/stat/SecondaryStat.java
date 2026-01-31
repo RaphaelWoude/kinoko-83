@@ -5,8 +5,6 @@ import kinoko.provider.ItemProvider;
 import kinoko.provider.SkillProvider;
 import kinoko.provider.item.ItemInfo;
 import kinoko.provider.item.ItemInfoType;
-import kinoko.provider.item.ItemOptionLevelData;
-import kinoko.provider.item.SetItemInfo;
 import kinoko.provider.skill.SkillInfo;
 import kinoko.provider.skill.SkillStat;
 import kinoko.server.packet.OutPacket;
@@ -20,17 +18,11 @@ import kinoko.world.job.JobConstants;
 import kinoko.world.job.cygnus.*;
 import kinoko.world.job.explorer.*;
 import kinoko.world.job.legend.Aran;
-import kinoko.world.job.legend.Evan;
-import kinoko.world.job.resistance.BattleMage;
-import kinoko.world.job.resistance.Citizen;
-import kinoko.world.job.resistance.Mechanic;
-import kinoko.world.job.resistance.WildHunter;
 import kinoko.world.skill.SkillConstants;
 import kinoko.world.skill.SkillManager;
 
 import java.util.*;
 import java.util.function.BiPredicate;
-import java.util.stream.Collectors;
 
 public final class SecondaryStat {
     private final Map<CharacterTemporaryStat, TemporaryStatOption> temporaryStats = new EnumMap<>(CharacterTemporaryStat.class);
@@ -215,7 +207,7 @@ public final class SecondaryStat {
                     }
                     case WeaponCharge, Stun, Darkness, Seal, Weakness, Curse, ShadowPartner, Attract, BanMap, Barrier,
                             DojangShield, ReverseInput, RepeatEffect, StopPortion, StopMotion, Fear, Frozen,
-                            SuddenDeath, FinalCut, Mechanic, DarkAura, BlueAura, YellowAura -> {
+                            SuddenDeath, FinalCut -> {
                         outPacket.encodeInt(getOption(cts).rOption);
                     }
                     case Poison -> {
@@ -257,30 +249,6 @@ public final class SecondaryStat {
         this.speed = 100;
         this.jump = 100;
 
-        // Set items
-        for (SetItemInfo setItemInfo : EtcProvider.getSetItemInfos()) {
-            final Set<Integer> equippedItems = realEquip.values().stream().map(Item::getItemId).collect(Collectors.toSet());
-            equippedItems.retainAll(setItemInfo.getItems());
-            for (int itemCount = 0; itemCount <= equippedItems.size(); itemCount++) {
-                final Map<ItemInfoType, Integer> effect = setItemInfo.getEffect().get(itemCount);
-                if (effect == null) {
-                    continue;
-                }
-                for (var entry : effect.entrySet()) {
-                    switch (entry.getKey()) {
-                        case incPAD -> this.pad += entry.getValue();
-                        case incPDD -> this.pdd += entry.getValue();
-                        case incMAD -> this.mad += entry.getValue();
-                        case incMDD -> this.mdd += entry.getValue();
-                        case incACC -> this.acc += entry.getValue();
-                        case incEVA -> this.eva += entry.getValue();
-                        case incSpeed -> this.speed += entry.getValue();
-                        case incJump -> this.jump += entry.getValue();
-                    }
-                }
-            }
-        }
-
         // Bare hands for pirates
         final Item weapon = realEquip.get(BodyPart.WEAPON.getValue());
         if (weapon == null && JobConstants.getJobCategory(bs.getJob()) == 5) {
@@ -292,7 +260,6 @@ public final class SecondaryStat {
         }
 
         // Equip stats
-        final SecondaryStatRateOption option = new SecondaryStatRateOption();
         for (var item : realEquip.values()) {
             // Resolve item and item info
             final Optional<ItemInfo> itemInfoResult = ItemProvider.getItemInfo(item.getItemId());
@@ -312,16 +279,6 @@ public final class SecondaryStat {
             this.craft += ed.getIncCraft();
             this.speed += ed.getIncSpeed();
             this.jump += ed.getIncJump();
-
-            final int optionLevel = ii.getOptionLevel();
-            if (ed.isReleased()) {
-                this.applyItemOption(ed.getOption1(), optionLevel);
-                this.applyItemOption(ed.getOption2(), optionLevel);
-                this.applyItemOption(ed.getOption3(), optionLevel);
-                option.applyItemOptionR(ed.getOption1(), optionLevel);
-                option.applyItemOptionR(ed.getOption2(), optionLevel);
-                option.applyItemOptionR(ed.getOption3(), optionLevel);
-            }
         }
 
         // Passive skills
@@ -340,11 +297,8 @@ public final class SecondaryStat {
                     this.acc += si.getValue(SkillStat.x, slv);
                     this.eva += si.getValue(SkillStat.y, slv);
                 }
-                case Evan.DRAGON_SOUL -> {
-                    this.mad += si.getValue(SkillStat.mad, slv);
-                }
-                case Beginner.BLESSING_OF_THE_FAIRY, Noblesse.BLESSING_OF_THE_FAIRY, Citizen.BLESSING_OF_THE_FAIRY,
-                        Aran.BLESSING_OF_THE_FAIRY, Evan.BLESSING_OF_THE_FAIRY -> {
+                case Beginner.BLESSING_OF_THE_FAIRY, Noblesse.BLESSING_OF_THE_FAIRY,
+                        Aran.BLESSING_OF_THE_FAIRY -> {
                     this.pad += si.getValue(SkillStat.x, slv);
                     this.mad += si.getValue(SkillStat.y, slv);
                     this.acc += si.getValue(SkillStat.z, slv);
@@ -366,16 +320,6 @@ public final class SecondaryStat {
                     pdd += stacks * si.getValue(SkillStat.z, slv);
                     mdd += stacks * si.getValue(SkillStat.z, slv);
                 }
-            }
-        }
-
-        // Jaguar Rider
-        if (SkillConstants.WILD_HUNTER_JAGUARS.contains(getRidingVehicle())) {
-            final int slv = SkillManager.getSkillLevel(ss, sm, WildHunter.JAGUAR_RIDER);
-            if (slv > 0) {
-                SkillProvider.getSkillInfoById(WildHunter.JAGUAR_RIDER).ifPresent((si) -> {
-                    this.eva += si.getValue(SkillStat.y, slv);
-                });
             }
         }
 
@@ -420,13 +364,8 @@ public final class SecondaryStat {
                 }
             }
             case CROSSBOW -> {
-                if (JobConstants.isWildHunterJob(bs.getJob())) {
-                    getStatFromSkill(ss, sm, WildHunter.CROSSBOW_MASTERY);
-                    getStatFromSkill(ss, sm, WildHunter.CROSSBOW_EXPERT);
-                } else {
-                    getStatFromSkill(ss, sm, Bowman.CROSSBOW_MASTERY);
-                    getStatFromSkill(ss, sm, Bowman.MARKSMAN_BOOST);
-                }
+                getStatFromSkill(ss, sm, Bowman.CROSSBOW_MASTERY);
+                getStatFromSkill(ss, sm, Bowman.MARKSMAN_BOOST);
             }
             case THROWINGGLOVE -> {
                 if (JobConstants.isCygnusJob(bs.getJob())) {
@@ -443,21 +382,12 @@ public final class SecondaryStat {
                 }
             }
             case GUN -> {
-                if (JobConstants.isMechanicJob(bs.getJob())) {
-                    getStatFromSkill(ss, sm, Mechanic.EXTREME_MECH, Mechanic.MECHANIC_MASTERY);
-                } else {
-                    getStatFromSkill(ss, sm, Pirate.GUN_MASTERY);
-                }
+                getStatFromSkill(ss, sm, Pirate.GUN_MASTERY);
             }
         }
 
         // get_magic_mastery
-        if (JobConstants.isEvanJob(bs.getJob())) {
-            getStatFromSkill(ss, sm, Evan.SPELL_MASTERY);
-            getStatFromSkill(ss, sm, Evan.MAGIC_MASTERY);
-        } else if (JobConstants.isBattleMageJob(bs.getJob())) {
-            getStatFromSkill(ss, sm, BattleMage.STAFF_MASTERY);
-        } else if (JobConstants.isBlazeWizardJob(bs.getJob())) {
+        if (JobConstants.isBlazeWizardJob(bs.getJob())) {
             getStatFromSkill(ss, sm, BlazeWizard.SPELL_MASTERY);
         } else if (JobConstants.isFirePoisonJob(bs.getJob())) {
             getStatFromSkill(ss, sm, Magician.SPELL_MASTERY_FP);
@@ -474,14 +404,6 @@ public final class SecondaryStat {
             getStatFromSkill(ss, sm, Bowman.THRUST_MM);
         } else if (JobConstants.isWindArcherJob(bs.getJob())) {
             getStatFromSkill(ss, sm, WindArcher.THRUST);
-        }
-        if (hasOption(CharacterTemporaryStat.YellowAura)) {
-            final Optional<SkillInfo> yellowAuraResult = SkillProvider.getSkillInfoById(getOption(CharacterTemporaryStat.YellowAura).rOption);
-            yellowAuraResult.ifPresent((si) -> this.speed += si.getValue(SkillStat.x, getOption(CharacterTemporaryStat.YellowAura).nOption));
-            if (hasOption(CharacterTemporaryStat.SuperBody)) {
-                final Optional<SkillInfo> bodyBoostResult = SkillProvider.getSkillInfoById(BattleMage.BODY_BOOST_YELLOW_AURA);
-                bodyBoostResult.ifPresent((si) -> this.speed += si.getValue(SkillStat.x, getOption(CharacterTemporaryStat.SuperBody).nOption));
-            }
         }
 
         // Forced stat
@@ -510,14 +432,6 @@ public final class SecondaryStat {
             this.jump = fs.getJump();
         }
 
-        this.itemPadR += option.padR;
-        this.itemPddR += option.pddR;
-        this.itemMadR += option.madR;
-        this.itemMddR += option.mddR;
-        this.itemAccR += option.accR;
-        this.itemEvaR += option.evaR;
-        this.itemCriR += option.criR;
-
         // Clamp values
         this.pad = Math.clamp(this.pad, 0, GameConstants.PAD_MAX);
         this.pdd = Math.clamp(this.pdd, 0, GameConstants.PDD_MAX);
@@ -527,25 +441,6 @@ public final class SecondaryStat {
         this.eva = Math.clamp(this.eva, 0, GameConstants.EVA_MAX);
         this.speed = Math.clamp(this.speed, GameConstants.SPEED_MIN, fs.getSpeedMax() != 0 ? fs.getSpeedMax() : GameConstants.SPEED_MAX);
         this.jump = Math.clamp(this.jump, GameConstants.JUMP_MIN, GameConstants.JUMP_MAX);
-    }
-
-    private void applyItemOption(int itemOptionId, int optionLevel) {
-        final Optional<ItemOptionLevelData> itemOptionResult = ItemProvider.getItemOptionInfo(itemOptionId, optionLevel);
-        if (itemOptionResult.isEmpty()) {
-            return;
-        }
-        for (var entry : itemOptionResult.get().getStats().entrySet()) {
-            switch (entry.getKey()) {
-                case incPAD -> this.pad += entry.getValue();
-                case incPDD -> this.pdd += entry.getValue();
-                case incMAD -> this.mad += entry.getValue();
-                case incMDD -> this.mdd += entry.getValue();
-                case incACC -> this.acc += entry.getValue();
-                case incEVA -> this.eva += entry.getValue();
-                case incSpeed -> this.speed += entry.getValue();
-                case incJump -> this.jump += entry.getValue();
-            }
-        }
     }
 
     private void getStatFromSkill(SecondaryStat ss, SkillManager sm, int... skillIds) {
@@ -562,17 +457,12 @@ public final class SecondaryStat {
             switch (skillId) {
                 case Warrior.WEAPON_MASTERY_HERO, Warrior.WEAPON_MASTERY_PALADIN, DawnWarrior.SWORD_MASTERY,
                         Thief.KATARA_MASTERY, Thief.DAGGER_MASTERY, Warrior.WEAPON_MASTERY_DRK, Aran.POLEARM_MASTERY,
-                        WindArcher.BOW_MASTERY, Bowman.BOW_MASTERY, WildHunter.CROSSBOW_MASTERY,
+                        WindArcher.BOW_MASTERY, Bowman.BOW_MASTERY,
                         Bowman.CROSSBOW_MASTERY, NightWalker.CLAW_MASTERY, Thief.CLAW_MASTERY,
-                        ThunderBreaker.KNUCKLE_MASTERY, Pirate.KNUCKLE_MASTERY, Mechanic.EXTREME_MECH,
-                        Mechanic.MECHANIC_MASTERY, Pirate.GUN_MASTERY -> {
-                    this.acc += si.getValue(SkillStat.x, slv);
-                }
-                case Aran.HIGH_MASTERY, WindArcher.BOW_EXPERT, Bowman.BOW_EXPERT, WildHunter.CROSSBOW_EXPERT,
-                        Bowman.MARKSMAN_BOOST -> {
-                    this.pad += si.getValue(SkillStat.x, slv);
-                }
-                case Evan.SPELL_MASTERY, Evan.MAGIC_MASTERY, BattleMage.STAFF_MASTERY, BlazeWizard.SPELL_MASTERY,
+                        ThunderBreaker.KNUCKLE_MASTERY, Pirate.KNUCKLE_MASTERY, Pirate.GUN_MASTERY -> this.acc += si.getValue(SkillStat.x, slv);
+                case Aran.HIGH_MASTERY, WindArcher.BOW_EXPERT, Bowman.BOW_EXPERT,
+                        Bowman.MARKSMAN_BOOST -> this.pad += si.getValue(SkillStat.x, slv);
+                case BlazeWizard.SPELL_MASTERY,
                         Magician.SPELL_MASTERY_BISH, Magician.SPELL_MASTERY_IL, Magician.SPELL_MASTERY_FP -> {
                     this.mad += si.getValue(SkillStat.x, slv);
                 }
@@ -581,35 +471,6 @@ public final class SecondaryStat {
                 }
             }
             break;
-        }
-    }
-
-
-    private static class SecondaryStatRateOption {
-        private int padR;
-        private int pddR;
-        private int madR;
-        private int mddR;
-        private int accR;
-        private int evaR;
-        private int criR;
-
-        private void applyItemOptionR(short itemOptionId, int optionLevel) {
-            final Optional<ItemOptionLevelData> itemOptionResult = ItemProvider.getItemOptionInfo(itemOptionId, optionLevel);
-            if (itemOptionResult.isEmpty()) {
-                return;
-            }
-            for (var entry : itemOptionResult.get().getStats().entrySet()) {
-                switch (entry.getKey()) {
-                    case incPADr -> this.padR += entry.getValue();
-                    case incPDDr -> this.pddR += entry.getValue();
-                    case incMADr -> this.madR += entry.getValue();
-                    case incMDDr -> this.mddR += entry.getValue();
-                    case incACCr -> this.accR += entry.getValue();
-                    case incEVAr -> this.evaR += entry.getValue();
-                    case incCr -> this.criR += entry.getValue();
-                }
-            }
         }
     }
 }

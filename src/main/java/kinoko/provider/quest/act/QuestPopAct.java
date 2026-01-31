@@ -18,7 +18,7 @@ public final class QuestPopAct implements QuestAct {
     @Override
     public boolean doAct(User user, int rewardIndex) {
         user.addPop(pop);
-        user.write(MessagePacket.incPop(pop));
+        // user.write(MessagePacket.incPop(pop));
         return true;
     }
 }

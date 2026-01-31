@@ -31,13 +31,8 @@ public final class QuestSpAct implements QuestAct {
     @Override
     public boolean doAct(User user, int rewardIndex) {
         final CharacterStat cs = user.getCharacterStat();
-        if (JobConstants.isExtendSpJob(cs.getJob())) {
-            cs.getSp().addSp(JobConstants.getJobLevel(job), sp);
-            user.write(WvsContext.statChanged(Stat.SP, cs.getSp(), false));
-        } else {
-            cs.getSp().addNonExtendSp(sp);
-            user.write(WvsContext.statChanged(Stat.SP, (short) cs.getSp().getNonExtendSp(), false));
-        }
+        cs.getSp().addNonExtendSp(sp);
+        user.write(WvsContext.statChanged(Stat.SP, (short) cs.getSp().getNonExtendSp(), false));
         return true;
     }
 

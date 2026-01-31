@@ -3,22 +3,19 @@ package kinoko.script.common;
 public enum ScriptMessageType {
     // SM
     SAY(0),
-    SAYIMAGE(1),
-    ASKYESNO(2),
-    ASKTEXT(3),
-    ASKNUMBER(4),
-    ASKMENU(5),
-    ASKQUIZ(6),
-    ASKSPEEDQUIZ(7),
-    ASKAVATAR(8),
-    ASKMEMBERSHOPAVATAR(9),
-    ASKPET(10),
-    ASKPETALL(11),
-    SCRIPT(12),
-    ASKACCEPT(13),
-    ASKBOXTEXT(14),
-    ASKSLIDEMENU(15),
-    ASKCENTER(16);
+    ASKYESNO(1),
+    ASKTEXT(2),
+    ASKNUMBER(3),
+    ASKMENU(4),
+    ASKQUIZ(5),
+    ASKSPEEDQUIZ(6),
+    ASKAVATAR(7),
+    ASKMEMBERSHOPAVATAR(8),
+    ASKPET(9),
+    ASKPETALL(10),
+    ASKACCEPT(12),
+    ASKBOXTEXT(13),
+    ASKSLIDEMENU(14);
 
     private final byte value;
 

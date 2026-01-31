@@ -55,16 +55,20 @@ public final class CoupleRecord {
             // GW_CoupleRecord::Decode (33)
             outPacket.encodeInt(coupleData.getPairCharacterId()); // dwPairCharacterID
             outPacket.encodeString(coupleData.getPairCharacterString(), 13); // sPairCharacterName
-            outPacket.encodeLong(coupleData.getItemSn()); // liSN
-            outPacket.encodeLong(coupleData.getPairItemSn()); // liPairSN
+            outPacket.encodeInt(coupleData.getItemSn()); // liSN
+            outPacket.encodeInt(0); // ???
+            outPacket.encodeInt(coupleData.getPairItemSn()); // liPairSN
+            outPacket.encodeInt(0); // ???
         }
         outPacket.encodeShort(friendRecords.size());
         for (CoupleData coupleData : friendRecords) {
             // GW_FriendRecord::Decode (37)
             outPacket.encodeInt(coupleData.getPairCharacterId()); // dwPairCharacterID
             outPacket.encodeString(coupleData.getPairCharacterString(), 13); // sPairCharacterName
-            outPacket.encodeLong(coupleData.getItemSn()); // liSN
-            outPacket.encodeLong(coupleData.getPairItemSn()); // liPairSN
+            outPacket.encodeInt(coupleData.getItemSn()); // liSN
+            outPacket.encodeInt(0); // ???
+            outPacket.encodeInt(coupleData.getPairItemSn()); // liPairSN
+            outPacket.encodeInt(0); // ???
             outPacket.encodeInt(coupleData.getItemId()); // dwFriendItemID
         }
         outPacket.encodeShort(0); // short * GW_MarriageRecord::Decode

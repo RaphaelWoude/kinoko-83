@@ -3,8 +3,6 @@ package kinoko.world.field.affectedarea;
 import kinoko.provider.SkillProvider;
 import kinoko.provider.skill.ElementAttribute;
 import kinoko.provider.skill.SkillInfo;
-import kinoko.provider.skill.SkillStat;
-import kinoko.server.ServerConfig;
 import kinoko.server.packet.OutPacket;
 import kinoko.util.Encodable;
 import kinoko.util.Rect;
@@ -15,7 +13,6 @@ import kinoko.world.field.mob.Mob;
 import kinoko.world.job.cygnus.BlazeWizard;
 import kinoko.world.job.cygnus.NightWalker;
 import kinoko.world.job.explorer.Magician;
-import kinoko.world.job.legend.Evan;
 import kinoko.world.user.User;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -82,25 +79,6 @@ public final class AffectedArea extends FieldObjectImpl implements Encodable {
 
     public Instant getExpireTime() {
         return expireTime;
-    }
-
-    public void handleUserInside(User user) {
-        switch (skillId) {
-            case Evan.RECOVERY_AURA -> {
-                final int partyId = ((User) owner).getPartyId();
-                if (user.getCharacterId() == owner.getId() || (partyId != 0 && user.getPartyId() == partyId)) {
-                    final Optional<SkillInfo> skillInfoResult = SkillProvider.getSkillInfoById(skillId);
-                    if (skillInfoResult.isEmpty()) {
-                        log.error("Failed to resolve skill info for affected area : {}", skillId);
-                        return;
-                    }
-                    final SkillInfo si = skillInfoResult.get();
-                    double recoveryRate = si.getValue(SkillStat.x, skillLevel) / 100.0;
-                    recoveryRate = recoveryRate * (interval * ServerConfig.FIELD_TICK_INTERVAL) / si.getDuration(skillLevel);
-                    user.addMp((int) (recoveryRate * user.getMaxMp()));
-                }
-            }
-        }
     }
 
     public void handleMobInside(Mob mob) {

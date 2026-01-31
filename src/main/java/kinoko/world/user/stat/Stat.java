@@ -8,7 +8,6 @@ public enum Stat {
     SKIN(0x1),
     FACE(0x2),
     HAIR(0x4),
-    PETSN(0x8),
     LEVEL(0x10),
     JOB(0x20),
     STR(0x40),
@@ -24,8 +23,7 @@ public enum Stat {
     EXP(0x10000),
     POP(0x20000),
     MONEY(0x40000),
-    PETSN2(0x80000),
-    PETSN3(0x100000),
+    PET(0x180008),
     TEMPEXP(0x200000);
 
     public static final List<Stat> ENCODE_ORDER = List.of(values());

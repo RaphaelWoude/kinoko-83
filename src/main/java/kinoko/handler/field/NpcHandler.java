@@ -16,24 +16,24 @@ import java.util.Optional;
 public final class NpcHandler {
     private static final Logger log = LogManager.getLogger(NpcHandler.class);
 
-    @Handler(InHeader.NpcMove)
-    public static void handleNpcMove(User user, InPacket inPacket) {
-        final int objectId = inPacket.decodeInt(); // dwNpcId
-        final byte oneTimeAction = inPacket.decodeByte(); // nOneTimeAction
-        final byte chatIndex = inPacket.decodeByte(); // nChatIdx
-
-        final Field field = user.getField();
-        final Optional<Npc> npcResult = field.getNpcPool().getById(objectId);
-        if (npcResult.isEmpty()) {
-            log.error("Received NpcMove for invalid object with ID : {}", objectId);
-            return;
-        }
-        final Npc npc = npcResult.get();
-
-        final MovePath movePath = npc.isMove() ? MovePath.decode(inPacket) : null;
-        if (movePath != null) {
-            movePath.applyTo(npc);
-        }
-        field.broadcastPacket(NpcPacket.npcMove(npc, oneTimeAction, chatIndex, movePath));
-    }
+//    @Handler(InHeader.NpcMove)
+//    public static void handleNpcMove(User user, InPacket inPacket) {
+//        final int objectId = inPacket.decodeInt(); // dwNpcId
+//        final byte oneTimeAction = inPacket.decodeByte(); // nOneTimeAction
+//        final byte chatIndex = inPacket.decodeByte(); // nChatIdx
+//
+//        final Field field = user.getField();
+//        final Optional<Npc> npcResult = field.getNpcPool().getById(objectId);
+//        if (npcResult.isEmpty()) {
+//            log.error("Received NpcMove for invalid object with ID : {}", objectId);
+//            return;
+//        }
+//        final Npc npc = npcResult.get();
+//
+//        final MovePath movePath = npc.isMove() ? MovePath.decode(inPacket) : null;
+//        if (movePath != null) {
+//            movePath.applyTo(npc);
+//        }
+//        field.broadcastPacket(NpcPacket.npcMove(npc, oneTimeAction, chatIndex, movePath));
+//    }
 }

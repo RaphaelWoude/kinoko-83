@@ -16,7 +16,6 @@ import kinoko.provider.skill.SkillInfo;
 import kinoko.provider.skill.SkillStat;
 import kinoko.provider.skill.SummonInfo;
 import kinoko.script.party.HenesysPQ;
-import kinoko.script.quest.EvanQuest;
 import kinoko.server.header.InHeader;
 import kinoko.server.packet.InPacket;
 import kinoko.util.Rect;
@@ -53,9 +52,9 @@ public final class MobHandler {
         final Field field = user.getField();
         final Optional<Mob> mobResult = field.getMobPool().getById(objectId);
         if (mobResult.isEmpty()) {
-            // log.error("Received MobMove for invalid object with ID : {}", objectId);
             return;
         }
+
         final Mob mob = mobResult.get();
         if (mob.getController() != user) {
             field.getUserPool().setController(mob, user);
@@ -66,48 +65,19 @@ public final class MobHandler {
         final byte actionAndDir = inPacket.decodeByte(); // nActionAndDir
         final int targetInfo = inPacket.decodeInt(); // CMob::TARGETINFO { short x, short y } || { short nSkillIDandLev, short nDelay }
 
-        final List<Tuple<Integer, Integer>> multiTargetForBall = new ArrayList<>();
-        final int multiTargetForBallCount = inPacket.decodeInt();
-        for (int i = 0; i < multiTargetForBallCount; i++) {
-            multiTargetForBall.add(Tuple.of(
-                    inPacket.decodeInt(), // aMultiTargetForBall[i].x
-                    inPacket.decodeInt() // aMultiTargetForBall[i].y
-            ));
-        }
-        final List<Integer> randTimeForAreaAttack = new ArrayList<>();
-        final int randTimeForAreaAttackCount = inPacket.decodeInt();
-        for (int i = 0; i < randTimeForAreaAttackCount; i++) {
-            randTimeForAreaAttack.add(inPacket.decodeInt()); // aRandTimeforAreaAttack[i]
-        }
-
-        inPacket.decodeByte(); // (bActive == 0) | (16 * !(CVecCtrlMob::IsCheatMobMoveRand(pvcActive) == 0))
-        inPacket.decodeInt(); // HackedCode
-        inPacket.decodeInt(); // moveCtx.fc.ptTarget->x
-        inPacket.decodeInt(); // moveCtx.fc.ptTarget->y
-        inPacket.decodeInt(); // dwHackedCodeCRC
-
         final MovePath movePath = MovePath.decode(inPacket);
         movePath.applyTo(mob);
-
-        inPacket.decodeByte(); // this->bChasing
-        inPacket.decodeByte(); // pTarget != 0
-        inPacket.decodeByte(); // pvcActive->bChasing
-        inPacket.decodeByte(); // pvcActive->bChasingHack
-        inPacket.decodeInt(); // pvcActive->tChaseDuration
 
         // Handle mob attack / skill
         final MobAttackInfo mai = new MobAttackInfo();
         mai.actionMask = actionMask;
         mai.actionAndDir = actionAndDir;
         mai.targetInfo = targetInfo;
-        mai.multiTargetForBall = multiTargetForBall;
-        mai.randTimeForAreaAttack = randTimeForAreaAttack;
+
         handleMobAttack(mob, mai);
 
-        // Update client
-        final boolean nextAttackPossible = (mai.actionMask & 0x1) != 0;
-        final Optional<MobSkill> nextSkillResult = nextAttackPossible ? mob.getNextSkill() : Optional.empty();
-        user.write(MobPacket.mobCtrlAck(mob, mobCtrlSn, nextAttackPossible, nextSkillResult.orElse(null)));
+        final boolean nextAttackPossible = (actionMask & 0x1) != 0;
+        user.write(MobPacket.mobCtrlAck(mob, mobCtrlSn, nextAttackPossible, null));
         field.broadcastPacket(MobPacket.mobMove(mob, mai, movePath), user);
     }
 
@@ -171,19 +141,8 @@ public final class MobHandler {
         }
         // Process mob death
         field.getMobPool().removeMob(targetMob, MobLeaveType.ETC);
-        switch (targetMob.getTemplateId()) {
-            case HenesysPQ.MOON_BUNNY -> {
-                field.broadcastPacket(BroadcastPacket.noticeWithoutPrefix("The Moon Bunny went home because he was sick."));
-            }
-            case EvanQuest.SAFE_GUARD -> {
-                final Optional<QuestRecord> questRecordResult = user.getQuestManager().getQuestRecord(22583); // Releasing the Free Spirits
-                if (questRecordResult.isPresent()) {
-                    final QuestRecord qr = questRecordResult.get();
-                    qr.setValue("001");
-                    user.write(MessagePacket.questRecord(qr));
-                    user.validateStat();
-                }
-            }
+        if (targetMob.getTemplateId() == HenesysPQ.MOON_BUNNY) {
+            field.broadcastPacket(BroadcastPacket.noticeWithoutPrefix("The Moon Bunny went home because he was sick."));
         }
     }
 
@@ -208,40 +167,6 @@ public final class MobHandler {
         final Mob mob = mobResult.get();
         mob.damage(user, damage, 0);
         mob.getField().broadcastPacket(MobPacket.mobDamaged(mob, damage), user);
-    }
-
-    @Handler(InHeader.MobTimeBombEnd)
-    public static void handleMobTimeBombEnd(User user, InPacket inPacket) {
-        // CMob::UpdateTimeBomb
-        final int objectId = inPacket.decodeInt(); // dwMobID
-
-        final Field field = user.getField();
-        final Optional<Mob> mobResult = field.getMobPool().getById(objectId);
-        if (mobResult.isEmpty()) {
-            log.error("Received MobTimeBombEnd for invalid object with ID : {}", objectId);
-            return;
-        }
-        final Mob mob = mobResult.get();
-        if (mob.isBoss()) {
-            inPacket.decodeInt(); // (rcBody.right + rcBody.left) / 2)
-            inPacket.decodeInt(); // (rcBody.bottom + rcBody.top) / 2)
-        }
-        final int x = inPacket.decodeInt(); // user x
-        final int y = inPacket.decodeInt(); // user y
-
-        if (!mob.getMobStat().hasOption(MobTemporaryStat.TimeBomb)) {
-            log.error("Received MobTimeBombEnd for mob ID : {} without TimeBomb stat", mob.getId());
-            return;
-        }
-        mob.resetTemporaryStat(Set.of(MobTemporaryStat.TimeBomb));
-        // Damage user if within range
-        if (mob.getRelativeRect(SkillConstants.MONSTER_BOMB_RANGE).isInsideRect(x, y)) {
-            final int damage = (int) Math.min(CalcDamage.calcDamageMax(user), user.getHp() - 100);
-            user.addHp(-damage);
-            user.write(UserLocal.timeBombAttack(Thief.MONSTER_BOMB, mob.getX(), mob.getY(), 120, damage));
-        } else {
-            user.write(UserLocal.timeBombAttack(Thief.MONSTER_BOMB, mob.getX(), mob.getY(), 0, 0));
-        }
     }
 
     private static void handleMobAttack(Mob mob, MobAttackInfo mai) {

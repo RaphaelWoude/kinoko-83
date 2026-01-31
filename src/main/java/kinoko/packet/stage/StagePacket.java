@@ -11,39 +11,38 @@ import java.time.Instant;
 public final class StagePacket {
     // CStage::OnPacket ------------------------------------------------------------------------------------------------
 
-    public static OutPacket setField(User user, int channelId, boolean isMigrate, boolean isRevive) {
+    public static OutPacket migrateToField(User user, int channelId) {
         final OutPacket outPacket = OutPacket.of(OutHeader.SetField);
-        outPacket.encodeShort(0); // CClientOptMan::DecodeOpt
         outPacket.encodeInt(channelId); // nChannelID
-        outPacket.encodeInt(0); // dwOldDriverID
-        outPacket.encodeByte(user.getNextFieldKey()); // bFieldKey
-        outPacket.encodeByte(isMigrate); // bCharacterData
-        outPacket.encodeShort(0); // nNotifierCheck
+        outPacket.encodeByte(1);
+        outPacket.encodeByte(1);
+        outPacket.encodeShort(0);
 
-        if (isMigrate) {
-            // m_CalcDamage
-            final int s1 = Util.getRandom().nextInt();
-            final int s2 = Util.getRandom().nextInt();
-            final int s3 = Util.getRandom().nextInt();
-            user.getCalcDamage().setSeed(s1, s2, s3);
-            user.getCalcDamage().setNextAttackCritical(false);
-            outPacket.encodeInt(s1);
-            outPacket.encodeInt(s2);
-            outPacket.encodeInt(s3);
+        final int s1 = Util.getRandom().nextInt();
+        final int s2 = Util.getRandom().nextInt();
+        final int s3 = Util.getRandom().nextInt();
+        user.getCalcDamage().setSeed(s1, s2, s3);
+        user.getCalcDamage().setNextAttackCritical(false);
+        outPacket.encodeInt(s1);
+        outPacket.encodeInt(s2);
+        outPacket.encodeInt(s3);
 
-            // CharacterData::Decode
-            user.getCharacterData().encode(outPacket);
+        // CharacterData::Decode
+        user.getCharacterData().encode(outPacket);
 
-            // CWvsContext::OnSetLogoutGiftConfig
-            outPacket.encodeInt(0); // bPredictQuit
-            outPacket.encodeArray(new byte[4 * 3]); // anLogoutGiftCommoditySN
-        } else {
-            outPacket.encodeByte(isRevive);
-            outPacket.encodeInt(user.getCharacterStat().getPosMap());
-            outPacket.encodeByte(user.getCharacterStat().getPortal());
-            outPacket.encodeInt(user.getHp());
-            outPacket.encodeByte(false); // bChaseEnable -> int, int
-        }
+        outPacket.encodeFT(Instant.now()); // ftServer
+        return outPacket;
+    }
+
+    public static OutPacket setField(User user, int channelId, boolean isRevive) {
+        final OutPacket outPacket = OutPacket.of(OutHeader.SetField);
+        outPacket.encodeInt(channelId); // nChannelID
+        outPacket.encodeInt(0);
+        outPacket.encodeByte(0);
+        outPacket.encodeInt(user.getCharacterStat().getPosMap());
+        outPacket.encodeByte(user.getCharacterStat().getPortal());
+        outPacket.encodeShort(user.getHp());
+        outPacket.encodeByte(false); // bChaseEnable -> int, int
 
         outPacket.encodeFT(Instant.now()); // ftServer
         return outPacket;

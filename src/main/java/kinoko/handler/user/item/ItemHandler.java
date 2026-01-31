@@ -524,9 +524,9 @@ public abstract class ItemHandler {
             throw new IllegalStateException("Could not add reward item to inventory");
         }
         user.write(WvsContext.inventoryOperation(addResult.get(), true));
-        if (rewardEntry.hasEffect()) {
-            user.write(UserLocal.effect(Effect.lotteryUse(itemId, rewardEntry.getEffect())));
-        }
+//        if (rewardEntry.hasEffect()) {
+//            user.write(UserLocal.effect(Effect.lotteryUse(itemId, rewardEntry.getEffect())));
+//        }
     }
 
     @Handler(InHeader.PetStatChangeItemUseRequest)

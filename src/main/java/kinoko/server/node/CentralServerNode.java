@@ -89,8 +89,8 @@ public final class CentralServerNode extends Node {
         return migrationStorage.submitMigrationRequest(migrationInfo);
     }
 
-    public Optional<MigrationInfo> completeMigrationRequest(int channelId, int accountId, int characterId, byte[] machineId, byte[] clientKey) {
-        return migrationStorage.completeMigrationRequest(channelId, accountId, characterId, machineId, clientKey);
+    public Optional<MigrationInfo> completeMigrationRequest(int channelId, int accountId, int characterId) {
+        return migrationStorage.completeMigrationRequest(channelId, accountId, characterId);
     }
 
 

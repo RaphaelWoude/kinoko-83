@@ -69,12 +69,7 @@ public final class QuestItemData {
 
     public boolean checkJob(int jobId) {
         // CQuest::LoadReward
-        final long myJobFlag;
-        if (jobId == Job.EVAN_BEGINNER.getJobId()) {
-            myJobFlag = 0x20000L;
-        } else {
-            myJobFlag = 1L << (jobId / 100);
-        }
+        final long myJobFlag = 1L << (jobId / 100);
         int job = this.job;
         int jobEx = this.jobEx;
         if ((job | jobEx) == 0) {

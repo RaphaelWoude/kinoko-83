@@ -21,8 +21,6 @@ public final class MigrationInfo implements Encodable {
     private final int channelId;
     private final int accountId;
     private final int characterId;
-    private final byte[] machineId;
-    private final byte[] clientKey;
 
     private final Map<CharacterTemporaryStat, TemporaryStatOption> temporaryStats;
     private final Map<Integer, Instant> schedules;
@@ -37,8 +35,6 @@ public final class MigrationInfo implements Encodable {
             int channelId,
             int accountId,
             int characterId,
-            byte[] machineId,
-            byte[] clientKey,
             Map<CharacterTemporaryStat, TemporaryStatOption> temporaryStats,
             Map<Integer, Instant> schedules,
             Map<Integer, List<Summoned>> summoned,
@@ -46,12 +42,9 @@ public final class MigrationInfo implements Encodable {
             int effectItemId,
             String adBoard,
             Instant expireTime) {
-        assert machineId.length == 16 && clientKey.length == 8;
         this.channelId = channelId;
         this.accountId = accountId;
         this.characterId = characterId;
-        this.machineId = machineId;
-        this.clientKey = clientKey;
         this.temporaryStats = temporaryStats;
         this.schedules = schedules;
         this.summoned = summoned;
@@ -71,14 +64,6 @@ public final class MigrationInfo implements Encodable {
 
     public int getCharacterId() {
         return characterId;
-    }
-
-    public byte[] getMachineId() {
-        return machineId;
-    }
-
-    public byte[] getClientKey() {
-        return clientKey;
     }
 
     public Map<CharacterTemporaryStat, TemporaryStatOption> getTemporaryStats() {
@@ -109,9 +94,8 @@ public final class MigrationInfo implements Encodable {
         return Instant.now().isAfter(expireTime);
     }
 
-    public boolean verify(int channelId, int accountId, int characterId, byte[] machineId, byte[] clientKey) {
-        return this.channelId == channelId && this.accountId == accountId && this.characterId == characterId &&
-                Arrays.equals(this.machineId, machineId) && Arrays.equals(this.clientKey, clientKey);
+    public boolean verify(int channelId, int accountId, int characterId) {
+        return this.channelId == channelId && this.accountId == accountId && this.characterId == characterId;
     }
 
     @Override
@@ -120,8 +104,6 @@ public final class MigrationInfo implements Encodable {
                 "channelId=" + channelId +
                 ", accountId=" + accountId +
                 ", characterId=" + characterId +
-                ", machineId=" + Arrays.toString(machineId) +
-                ", clientKey=" + Arrays.toString(clientKey) +
                 ", temporaryStats=" + temporaryStats +
                 ", schedules=" + schedules +
                 ", summoned=" + summoned +
@@ -137,8 +119,6 @@ public final class MigrationInfo implements Encodable {
         outPacket.encodeInt(channelId);
         outPacket.encodeInt(accountId);
         outPacket.encodeInt(characterId);
-        outPacket.encodeArray(machineId);
-        outPacket.encodeArray(clientKey);
 
         encodeTemporaryStats(outPacket, temporaryStats);
         encodeSchedules(outPacket, schedules);
@@ -157,8 +137,6 @@ public final class MigrationInfo implements Encodable {
         final int channelId = inPacket.decodeInt();
         final int accountId = inPacket.decodeInt();
         final int characterId = inPacket.decodeInt();
-        final byte[] machineId = inPacket.decodeArray(16);
-        final byte[] clientKey = inPacket.decodeArray(8);
 
         final Map<CharacterTemporaryStat, TemporaryStatOption> temporaryStats = decodeTemporaryStats(inPacket);
         final Map<Integer, Instant> schedules = decodeSchedules(inPacket);
@@ -168,7 +146,7 @@ public final class MigrationInfo implements Encodable {
         final String adBoard = inPacket.decodeBoolean() ? inPacket.decodeString() : null;
 
         final Instant expireTime = Instant.ofEpochMilli(inPacket.decodeLong());
-        return new MigrationInfo(channelId, accountId, characterId, machineId, clientKey, temporaryStats, schedules, summoned, messengerId, effectItemId, adBoard, expireTime);
+        return new MigrationInfo(channelId, accountId, characterId, temporaryStats, schedules, summoned, messengerId, effectItemId, adBoard, expireTime);
     }
 
     public static MigrationInfo from(User user, int targetChannelId) {
@@ -183,8 +161,6 @@ public final class MigrationInfo implements Encodable {
                 targetChannelId,
                 user.getAccountId(),
                 user.getCharacterId(),
-                user.getClient().getMachineId(),
-                user.getClient().getClientKey(),
                 user.getSecondaryStat().getTemporaryStats(),
                 user.getSchedules(),
                 summoned,
@@ -195,13 +171,11 @@ public final class MigrationInfo implements Encodable {
         );
     }
 
-    public static MigrationInfo from(int targetChannelId, int accountId, int characterId, byte[] machineId, byte[] clientKey) {
+    public static MigrationInfo from(int targetChannelId, int accountId, int characterId) {
         return new MigrationInfo(
                 targetChannelId,
                 accountId,
                 characterId,
-                machineId,
-                clientKey,
                 Map.of(),
                 Map.of(),
                 Map.of(),

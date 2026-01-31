@@ -58,6 +58,15 @@ public interface WzProvider {
         throw new ProviderError("Unexpected or missing value while extracting String");
     }
 
+    static String getStringOrNull(Object object) {
+        if (object instanceof Integer value) {
+            return String.valueOf(value);
+        } else if (object instanceof String value) {
+            return value;
+        }
+        return null;
+    }
+
     static String getString(Object object, String defaultValue) {
         if (object instanceof Integer value) {
             return String.valueOf(value);

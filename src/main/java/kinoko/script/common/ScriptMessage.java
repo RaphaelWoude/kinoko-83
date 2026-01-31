@@ -1,5 +1,6 @@
 package kinoko.script.common;
 
+import kinoko.server.header.OutHeader;
 import kinoko.server.packet.OutPacket;
 import kinoko.util.Encodable;
 
@@ -63,12 +64,6 @@ public final class ScriptMessage implements Encodable {
                 outPacket.encodeByte(hasPrev); // bPrev
                 outPacket.encodeByte(hasNext); // bNext
             }
-            case SAYIMAGE -> {
-                outPacket.encodeByte(images.size());
-                for (String image : images) {
-                    outPacket.encodeString(image); // sPath
-                }
-            }
             case ASKYESNO, ASKACCEPT, ASKMENU -> {
                 outPacket.encodeString(text); // sText
             }
@@ -114,12 +109,6 @@ public final class ScriptMessage implements Encodable {
         message.text = text;
         message.hasPrev = hasPrev;
         message.hasNext = hasNext;
-        return message;
-    }
-
-    public static ScriptMessage sayImage(int speakerId, int messageParam, List<String> images) {
-        final ScriptMessage message = new ScriptMessage(speakerId, ScriptMessageType.SAYIMAGE, messageParam);
-        message.images = images;
         return message;
     }
 

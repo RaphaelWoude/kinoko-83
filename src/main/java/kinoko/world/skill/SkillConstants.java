@@ -2,17 +2,10 @@ package kinoko.world.skill;
 
 import kinoko.provider.skill.ElementAttribute;
 import kinoko.util.Rect;
-import kinoko.world.job.Job;
 import kinoko.world.job.JobConstants;
 import kinoko.world.job.cygnus.*;
 import kinoko.world.job.explorer.*;
 import kinoko.world.job.legend.Aran;
-import kinoko.world.job.legend.Evan;
-import kinoko.world.job.resistance.BattleMage;
-import kinoko.world.job.resistance.Citizen;
-import kinoko.world.job.resistance.Mechanic;
-import kinoko.world.job.resistance.WildHunter;
-import kinoko.world.user.stat.CharacterTemporaryStat;
 
 import java.util.List;
 
@@ -22,17 +15,13 @@ public final class SkillConstants {
             NightWalker.NIMBLE_BODY,
             Pirate.BULLET_TIME, // PirateQuickMotion
             ThunderBreaker.QUICK_MOTION, // StrikerQuickMotion
-            Evan.DRAGON_SOUL,
             Beginner.BLESSING_OF_THE_FAIRY,
             Noblesse.BLESSING_OF_THE_FAIRY,
-            Citizen.BLESSING_OF_THE_FAIRY,
-            Aran.BLESSING_OF_THE_FAIRY,
-            Evan.BLESSING_OF_THE_FAIRY
+            Aran.BLESSING_OF_THE_FAIRY
     );
     public static final List<Integer> WILD_HUNTER_JAGUARS = List.of(
             1932015, 1932030, 1932031, 1932032, 1932033, 1932036
     );
-    public static final int MECHANIC_VEHICLE = 1932016;
     public static final int BATTLESHIP_VEHICLE = 1932000;
     public static final int BATTLESHIP_DURABILITY = 5221999;
     public static final int ENERGY_CHARGE_MAX = 10000;
@@ -48,16 +37,10 @@ public final class SkillConstants {
             return switch (JobConstants.getNoviceSkillRootFromJob(jobId)) {
                 case 1000 -> Noblesse.FOLLOW_THE_LEAD;
                 case 2000 -> Aran.FOLLOW_THE_LEAD;
-                case 2001 -> Evan.FOLLOW_THE_LEAD;
-                case 3000 -> Citizen.FOLLOW_THE_LEAD;
                 default -> Beginner.FOLLOW_THE_LEAD;
             };
         }
-        if (JobConstants.isEvanJob(jobId)) {
-            return skillId + 20010000;
-        } else {
-            return skillId + 10000000 * (jobId / 1000);
-        }
+        return skillId + 10000000 * (jobId / 1000);
     }
 
     public static int getItemBonusRateSkill(int jobId) {
@@ -65,8 +48,6 @@ public final class SkillConstants {
             return Thief.ALCHEMIST;
         } else if (JobConstants.isNightWalkerJob(jobId)) {
             return NightWalker.ALCHEMIST;
-        } else if (JobConstants.isResistanceJob(jobId)) {
-            return Citizen.POTION_MASTERY;
         }
         return 0;
     }
@@ -126,8 +107,6 @@ public final class SkillConstants {
             return Magician.ELEMENT_AMPLIFICATION_IL;
         } else if (JobConstants.isBlazeWizardJob(jobId)) {
             return BlazeWizard.ELEMENT_AMPLIFICATION;
-        } else if (JobConstants.isEvanJob(jobId)) {
-            return Evan.MAGIC_AMPLIFICATION;
         } else {
             return 0;
         }
@@ -187,28 +166,10 @@ public final class SkillConstants {
         }
     }
 
-    public static CharacterTemporaryStat getStatByAuraSkill(int skillId) {
-        switch (skillId) {
-            case BattleMage.DARK_AURA:
-            case BattleMage.ADVANCED_DARK_AURA:
-                return CharacterTemporaryStat.DarkAura;
-            case BattleMage.BLUE_AURA:
-            case BattleMage.ADVANCED_BLUE_AURA:
-                return CharacterTemporaryStat.BlueAura;
-            case BattleMage.YELLOW_AURA:
-            case BattleMage.ADVANCED_YELLOW_AURA:
-                return CharacterTemporaryStat.YellowAura;
-            default:
-                return null;
-        }
-    }
-
     public static boolean isBeginnerSpAddableSkill(int skillId) {
         final int skillRoot = getSkillRoot(skillId);
         if (!JobConstants.isBeginnerJob(skillRoot)) {
             return false;
-        } else if (skillRoot == Job.CITIZEN.getJobId()) {
-            return skillId == Citizen.POTION_MASTERY || skillId == Citizen.CRYSTAL_THROW || skillId == Citizen.INFILTRATE;
         }
         final int skillType = skillId % 10000;
         return skillType == 1000 || skillType == 1001 || skillType == 1002;
@@ -221,9 +182,6 @@ public final class SkillConstants {
             case Magician.TELEPORT_IL:
             case Magician.TELEPORT_BISH:
             case BlazeWizard.TELEPORT:
-            case Evan.TELEPORT:
-            case BattleMage.TELEPORT:
-                return true;
             default:
                 return false;
         }
@@ -247,11 +205,6 @@ public final class SkillConstants {
         switch (skillId) {
             case Thief.TORNADO_SPIN_ATTACK:
             case Thief.CHAINS_OF_HELL:
-            case BattleMage.TWISTER_SPIN:
-            case Mechanic.MECH_SIEGE_MODE:
-            case Mechanic.MECH_MISSILE_TANK:
-            case Mechanic.GIANT_ROBOT_SG_88:
-            case Mechanic.MECH_SIEGE_MODE_2:
                 return true;
             default:
                 return false;
@@ -262,8 +215,6 @@ public final class SkillConstants {
         // Cooltime for these skills require special handling
         switch (skillId) {
             case Pirate.BATTLESHIP:
-            case Mechanic.ROCK_N_SHOCK:
-            case Mechanic.SATELLITE_SAFETY:
                 return true;
             default:
                 return false;
@@ -302,11 +253,6 @@ public final class SkillConstants {
             case NightWalker.HASTE:
             case ThunderBreaker.SPEED_INFUSION:
             case Aran.COMBO_BARRIER:
-            case Evan.MAGIC_SHIELD:
-            case Evan.MAGIC_RESISTANCE:
-            case Evan.BLESSING_OF_THE_ONYX:
-            case Evan.SOUL_STONE:
-            case WildHunter.SHARP_EYES_WH:
             case Warrior.MAPLE_WARRIOR_HERO:
             case Warrior.MAPLE_WARRIOR_PALADIN:
             case Warrior.MAPLE_WARRIOR_DRK:
@@ -321,12 +267,6 @@ public final class SkillConstants {
             case Pirate.MAPLE_WARRIOR_BUCC:
             case Pirate.MAPLE_WARRIOR_SAIR:
             case Aran.MAPLE_WARRIOR_ARAN:
-            case Evan.MAPLE_WARRIOR_EVAN:
-            case BattleMage.MAPLE_WARRIOR_BAM:
-            case WildHunter.MAPLE_WARRIOR_WH:
-            case Mechanic.MAPLE_WARRIOR_MECH:
-            case WildHunter.JAGUAR_OSHI_DIGESTED: // CUserLocal::TryDoingSwallowBuff
-                return true;
             default:
                 return false;
         }
@@ -342,12 +282,8 @@ public final class SkillConstants {
             return true;
         }
         switch (skillId) {
-            case Thief.SMOKESCREEN, BattleMage.PARTY_SHIELD: // CUserLocal::DoActiveSkill_SmokeShell
+            case Thief.SMOKESCREEN: // CUserLocal::DoActiveSkill_SmokeShell
             case Magician.MYSTIC_DOOR: // CUserLocal::DoActiveSkill_TownPortal
-            case Evan.RECOVERY_AURA: // CUserLocal::DoActiveSkill_RecoverAura
-            case Citizen.CALL_OF_THE_HUNTER: // CUserLocal::DoActiveSkill_SummonMonster
-            case Mechanic.OPEN_PORTAL_GX_9: // CUserLocal::DoActiveSkill_OpenGate
-                return true;
             default:
                 return false;
         }
@@ -442,18 +378,6 @@ public final class SkillConstants {
             case WindArcher.PUPPET:
             case NightWalker.DARKNESS:
             case ThunderBreaker.LIGHTNING:
-            case WildHunter.WILD_TRAP:
-            case WildHunter.SILVER_HAWK:
-            case Mechanic.ACCELERATION_BOT_EX_7:
-            case Mechanic.SATELLITE:
-            case Mechanic.SATELLITE_2:
-            case Mechanic.SATELLITE_3:
-            case Mechanic.ROCK_N_SHOCK:
-            case Mechanic.HEALING_ROBOT_H_LX:
-            case Mechanic.BOTS_N_TOTS:
-            case Mechanic.AMPLIFIER_ROBOT_AF_11:
-            case WildHunter.ITS_RAINING_MINES_HIDDEN: // CUserLocal::TryDoingMine
-            case Mechanic.GIANT_ROBOT_SG_88: // CUserLocal::DoActiveSkill_RepeatSkill
                 return true;
             default:
                 return false;
@@ -479,10 +403,6 @@ public final class SkillConstants {
             case WindArcher.PUPPET:
             case NightWalker.DARKNESS:
             case ThunderBreaker.LIGHTNING:
-            case WildHunter.SILVER_HAWK:
-            case Mechanic.SATELLITE:
-            case Mechanic.SATELLITE_2:
-            case Mechanic.SATELLITE_3:
                 return true;
             default:
                 return false;
@@ -490,16 +410,7 @@ public final class SkillConstants {
     }
 
     public static boolean isSummonMultipleSkill(int skillId) {
-        switch (skillId) {
-            case BattleMage.SUMMON_REAPER_BUFF:
-            case WildHunter.ITS_RAINING_MINES_HIDDEN:
-            case Mechanic.ROCK_N_SHOCK:
-            case Mechanic.HEALING_ROBOT_H_LX:
-            case Mechanic.BOTS_N_TOTS_SUMMON:
-                return true;
-            default:
-                return false;
-        }
+        return false;
     }
 
     public static boolean isShootSkillNotUsingShootingWeapon(int skillId) {
@@ -513,8 +424,6 @@ public final class SkillConstants {
             case Aran.COMBO_SMASH:
             case Aran.COMBO_FENRIR:
             case Aran.COMBO_TEMPEST:
-            case WildHunter.JAGUAR_OSHI_ATTACK:
-                return true;
             default:
                 return false;
         }
@@ -530,16 +439,6 @@ public final class SkillConstants {
             case Thief.SHADOW_MESO:
             case WindArcher.STORM_BREAK:
             case NightWalker.VAMPIRE:
-            case WildHunter.JAGUAR_RAWR:
-            case Mechanic.FLAME_LAUNCHER:
-            case Mechanic.GATLING_GUN:
-            case Mechanic.ENHANCED_FLAME_LAUNCHER:
-            case Mechanic.ENHANCED_GATLING_GUN:
-            case Mechanic.MECH_SIEGE_MODE:
-            case Mechanic.PUNCH_LAUNCHER:
-            case Mechanic.MECH_MISSILE_TANK:
-            case Mechanic.LASER_BLAST:
-            case Mechanic.MECH_SIEGE_MODE_2:
                 return true;
             default:
                 return false;
@@ -685,10 +584,6 @@ public final class SkillConstants {
             return false;
         }
         final int jobId = skillId / 10000;
-        if (JobConstants.isEvanJob(jobId)) {
-            final int jobLevel = JobConstants.getJobLevel(jobId);
-            return jobLevel == 9 || jobLevel == 10 || skillId == 22111001 || skillId == 22141002 || skillId == 22140000;
-        }
         if (JobConstants.isDualJob(jobId)) {
             return JobConstants.getJobLevel(jobId) == 4 ||
                     skillId == 4311003 ||

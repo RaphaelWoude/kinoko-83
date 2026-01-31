@@ -4,7 +4,6 @@ import kinoko.server.packet.OutPacket;
 import kinoko.util.Encodable;
 import kinoko.world.item.Item;
 import kinoko.world.job.explorer.Thief;
-import kinoko.world.job.resistance.Citizen;
 import kinoko.world.skill.Skill;
 import kinoko.world.skill.maker.MakerResult;
 
@@ -25,7 +24,7 @@ public class Effect implements Encodable {
         outPacket.encodeByte(type.getValue());
         switch (type) {
             case LevelUp, PlayPortalSE, JobChanged, QuestComplete, MonsterBookCardGet, ItemLevelUp,
-                    ExpItemConsumed, Buff, SoulStoneUse, RepeatEffectRemove, EvolRing -> {
+                    ExpItemConsumed, Buff, SoulStoneUse -> {
                 // no encodes
             }
             case Quest -> {
@@ -91,9 +90,6 @@ public class Effect implements Encodable {
             }
             case IncDecHPEffect_EX -> {
                 outPacket.encodeInt(int1); // nDelta
-            }
-            case DeliveryQuestItemUse -> {
-                outPacket.encodeInt(int1); // nItemId
             }
             default -> {
                 throw new IllegalStateException("Tried to encode unsupported effect type");
@@ -216,17 +212,10 @@ public class Effect implements Encodable {
         final SkillEffect effect = new SkillEffect(EffectType.SkillUse);
         effect.skillId = skill.skillId;
         effect.skillLevel = skill.slv;
-        switch (skill.skillId) {
-            case Thief.CHAINS_OF_HELL -> {
-                effect.left = skill.left; // bLeft
-                if (skill.targetIds != null && skill.targetIds.length > 0) {
-                    effect.info = skill.targetIds[0]; // dwMobID
-                }
-            }
-            case Citizen.CALL_OF_THE_HUNTER -> {
-                effect.left = skill.left; // bLeft
-                effect.positionX = skill.positionX; // ptOffset.x
-                effect.positionY = skill.positionY; // ptOffset.x
+        if (skill.skillId == Thief.CHAINS_OF_HELL) {
+            effect.left = skill.left; // bLeft
+            if (skill.targetIds != null && skill.targetIds.length > 0) {
+                effect.info = skill.targetIds[0]; // dwMobID
             }
         }
         effect.charLevel = charLevel;
@@ -255,23 +244,6 @@ public class Effect implements Encodable {
         final SkillEffect effect = new SkillEffect(EffectType.SkillAffected);
         effect.skillId = skillId;
         effect.skillLevel = skillLevel;
-        return effect;
-    }
-
-    public static SkillEffect skillAffectedSelect(int select, int skillId, int skillLevel) {
-        final SkillEffect effect = new SkillEffect(EffectType.SkillAffected_Select);
-        effect.info = select;
-        effect.skillId = skillId;
-        effect.skillLevel = skillLevel;
-        return effect;
-    }
-
-    public static SkillEffect skillSpecial(int skillId, int skillLevel, int positionX, int positionY) {
-        final SkillEffect effect = new SkillEffect(EffectType.SkillAffected_Select);
-        effect.skillId = skillId;
-        effect.skillLevel = skillLevel;
-        effect.positionX = positionX;
-        effect.positionY = positionY;
         return effect;
     }
 }

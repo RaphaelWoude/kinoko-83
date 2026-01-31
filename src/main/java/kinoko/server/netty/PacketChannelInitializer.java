@@ -36,8 +36,8 @@ public final class PacketChannelInitializer extends ChannelInitializer<SocketCha
             return;
         }
 
+        log.debug("Client connected");
         final Client client = new Client(node, c);
-        client.setClientKey(getNewClientKey());
         client.write(LoginPacket.connect(recvIv, sendIv));
         c.attr(NettyClient.CLIENT_KEY).set(client);
     }
@@ -53,11 +53,5 @@ public final class PacketChannelInitializer extends ChannelInitializer<SocketCha
         final byte[] iv = new byte[4];
         Util.getRandom().nextBytes(iv);
         return iv;
-    }
-
-    private static byte[] getNewClientKey() {
-        final byte[] clientKey = new byte[8];
-        Util.getRandom().nextBytes(clientKey);
-        return clientKey;
     }
 }

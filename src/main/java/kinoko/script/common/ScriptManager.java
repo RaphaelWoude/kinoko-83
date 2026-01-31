@@ -266,8 +266,6 @@ public interface ScriptManager {
 
     void sayBoth(String text, ScriptMessageParam... overrides);
 
-    void sayImage(List<String> images, ScriptMessageParam... overrides);
-
     boolean askYesNo(String text, ScriptMessageParam... overrides);
 
     boolean askAccept(String text, ScriptMessageParam... overrides);

@@ -4,8 +4,6 @@ import kinoko.provider.EtcProvider;
 import kinoko.provider.ItemProvider;
 import kinoko.provider.item.ItemInfo;
 import kinoko.provider.item.ItemInfoType;
-import kinoko.provider.item.ItemOptionLevelData;
-import kinoko.provider.item.SetItemInfo;
 import kinoko.world.item.*;
 import kinoko.world.user.Pet;
 import kinoko.world.user.User;
@@ -62,65 +60,6 @@ public final class EquipStat {
         return totalLuk + (totalLuk * incLukR / 100);
     }
 
-    private void applyItemOption(int itemOptionId, int optionLevel) {
-        final Optional<ItemOptionLevelData> itemOptionResult = ItemProvider.getItemOptionInfo(itemOptionId, optionLevel);
-        if (itemOptionResult.isEmpty()) {
-            return;
-        }
-        for (var entry : itemOptionResult.get().getStats().entrySet()) {
-            switch (entry.getKey()) {
-                case incSTR -> this.incStr += entry.getValue();
-                case incDEX -> this.incDex += entry.getValue();
-                case incINT -> this.incInt += entry.getValue();
-                case incLUK -> this.incLuk += entry.getValue();
-            }
-        }
-    }
-
-    private void applyItemOptionR(int itemOptionId, int optionLevel) {
-        final Optional<ItemOptionLevelData> itemOptionResult = ItemProvider.getItemOptionInfo(itemOptionId, optionLevel);
-        if (itemOptionResult.isEmpty()) {
-            return;
-        }
-        for (var entry : itemOptionResult.get().getStats().entrySet()) {
-            switch (entry.getKey()) {
-                case incSTRr -> this.incStrR += entry.getValue();
-                case incDEXr -> this.incDexR += entry.getValue();
-                case incINTr -> this.incIntR += entry.getValue();
-                case incLUKr -> this.incLukR += entry.getValue();
-            }
-        }
-    }
-
-    private void clearItemOption(int itemOptionId, int optionLevel) {
-        final Optional<ItemOptionLevelData> itemOptionResult = ItemProvider.getItemOptionInfo(itemOptionId, optionLevel);
-        if (itemOptionResult.isEmpty()) {
-            return;
-        }
-        for (var entry : itemOptionResult.get().getStats().entrySet()) {
-            switch (entry.getKey()) {
-                case incSTR -> this.incStr -= entry.getValue();
-                case incDEX -> this.incDex -= entry.getValue();
-                case incINT -> this.incInt -= entry.getValue();
-                case incLUK -> this.incLuk -= entry.getValue();
-            }
-        }
-    }
-
-    private void clearItemOptionR(int itemOptionId, int optionLevel) {
-        final Optional<ItemOptionLevelData> itemOptionResult = ItemProvider.getItemOptionInfo(itemOptionId, optionLevel);
-        if (itemOptionResult.isEmpty()) {
-            return;
-        }
-        for (var entry : itemOptionResult.get().getStats().entrySet()) {
-            switch (entry.getKey()) {
-                case incSTRr -> this.incStrR -= entry.getValue();
-                case incDEXr -> this.incDexR -= entry.getValue();
-                case incINTr -> this.incIntR -= entry.getValue();
-                case incLUKr -> this.incLukR -= entry.getValue();
-            }
-        }
-    }
 
     public static Map<Integer, Item> getRealEquip(User user) {
         final CharacterStat cs = user.getCharacterStat();
@@ -150,41 +89,6 @@ public final class EquipStat {
             stat.incDex += ed.getIncDex();
             stat.incInt += ed.getIncInt();
             stat.incLuk += ed.getIncLuk();
-
-            final Optional<ItemInfo> itemInfoResult = ItemProvider.getItemInfo(item.getItemId());
-            if (itemInfoResult.isEmpty()) {
-                continue;
-            }
-            final ItemInfo ii = itemInfoResult.get();
-            final int optionLevel = ii.getOptionLevel();
-            if (ed.isReleased()) {
-                stat.applyItemOption(ed.getOption1(), optionLevel);
-                stat.applyItemOption(ed.getOption2(), optionLevel);
-                stat.applyItemOption(ed.getOption3(), optionLevel);
-                stat.applyItemOptionR(ed.getOption1(), optionLevel);
-                stat.applyItemOptionR(ed.getOption2(), optionLevel);
-                stat.applyItemOptionR(ed.getOption3(), optionLevel);
-            }
-        }
-
-        // Set items
-        for (SetItemInfo setItemInfo : EtcProvider.getSetItemInfos()) {
-            final Set<Integer> equippedItems = equipped.getItems().values().stream().map(Item::getItemId).collect(Collectors.toSet());
-            equippedItems.retainAll(setItemInfo.getItems());
-            for (int itemCount = 0; itemCount <= equippedItems.size(); itemCount++) {
-                final Map<ItemInfoType, Integer> effect = setItemInfo.getEffect().get(itemCount);
-                if (effect == null) {
-                    continue;
-                }
-                for (var entry : effect.entrySet()) {
-                    switch (entry.getKey()) {
-                        case incSTR -> stat.incStr += entry.getValue();
-                        case incDEX -> stat.incDex += entry.getValue();
-                        case incINT -> stat.incInt += entry.getValue();
-                        case incLUK -> stat.incLuk += entry.getValue();
-                    }
-                }
-            }
         }
 
         // Build real equip list
@@ -210,13 +114,6 @@ public final class EquipStat {
             statWithout.incDex -= ed.getIncDex();
             statWithout.incInt -= ed.getIncInt();
             statWithout.incLuk -= ed.getIncLuk();
-            final int optionLevel = ii.getOptionLevel();
-            statWithout.clearItemOption(ed.getOption1(), optionLevel);
-            statWithout.clearItemOption(ed.getOption2(), optionLevel);
-            statWithout.clearItemOption(ed.getOption3(), optionLevel);
-            statWithout.clearItemOptionR(ed.getOption1(), optionLevel);
-            statWithout.clearItemOptionR(ed.getOption2(), optionLevel);
-            statWithout.clearItemOptionR(ed.getOption3(), optionLevel);
 
             // Find applicable pet
             final Pet pet;
@@ -235,7 +132,6 @@ public final class EquipStat {
                     cs.getGender(),
                     cs.getLevel(),
                     cs.getJob(),
-                    cs.getSubJob(),
                     statWithout.getStr(baseStr),
                     statWithout.getDex(baseDex),
                     statWithout.getInt(baseInt),

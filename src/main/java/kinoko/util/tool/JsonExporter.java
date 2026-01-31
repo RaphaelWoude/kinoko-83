@@ -46,12 +46,7 @@ final class JsonExporter {
             Map.entry("Night Walker", List.of(NOBLESSE, NIGHT_WALKER_1, NIGHT_WALKER_2, NIGHT_WALKER_3)),
             Map.entry("Thunder Breaker", List.of(NOBLESSE, THUNDER_BREAKER_1, THUNDER_BREAKER_2, THUNDER_BREAKER_3)),
             // LEGEND
-            Map.entry("Aran", List.of(ARAN_BEGINNER, ARAN_1, ARAN_2, ARAN_3, ARAN_4)),
-            Map.entry("Evan", List.of(EVAN_BEGINNER, EVAN_1, EVAN_2, EVAN_3, EVAN_4, EVAN_5, EVAN_6, EVAN_7, EVAN_8, EVAN_9, EVAN_10)),
-            // RESISTANCE
-            Map.entry("Battle Mage", List.of(CITIZEN, BATTLE_MAGE_1, BATTLE_MAGE_2, BATTLE_MAGE_3, BATTLE_MAGE_4)),
-            Map.entry("Wild Hunter", List.of(CITIZEN, WILD_HUNTER_1, WILD_HUNTER_2, WILD_HUNTER_3, WILD_HUNTER_4)),
-            Map.entry("Mechanic", List.of(CITIZEN, MECHANIC_1, MECHANIC_2, MECHANIC_3, MECHANIC_4))
+            Map.entry("Aran", List.of(ARAN_BEGINNER, ARAN_1, ARAN_2, ARAN_3, ARAN_4))
     );
 
     public static void main(String[] args) throws IOException {
@@ -67,10 +62,8 @@ final class JsonExporter {
             return "Explorers";
         } else if (JobConstants.isCygnusJob(jobId)) {
             return "Cygnus Knights";
-        } else if (JobConstants.isAranJob(jobId) || JobConstants.isEvanJob(jobId)) {
+        } else if (JobConstants.isAranJob(jobId)) {
             return "Legends";
-        } else if (JobConstants.isResistanceJob(jobId)) {
-            return "Resistance";
         }
         return "Others";
     }

@@ -1,7 +1,6 @@
 package kinoko.world.skill;
 
 import kinoko.server.header.OutHeader;
-import kinoko.world.job.resistance.BattleMage;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -102,18 +101,6 @@ public final class Attack {
     }
 
     public boolean isMagicAttack() {
-        switch (skillId) {
-            case BattleMage.TRIPLE_BLOW:
-            case BattleMage.QUAD_BLOW:
-            case BattleMage.QUINTUPLE_BLOW:
-            case BattleMage.FINISHING_BLOW:
-            case BattleMage.THE_FINISHER_STANDALONE:
-            case BattleMage.THE_FINISHER_TRIPLE_BLOW:
-            case BattleMage.THE_FINISHER_QUAD_BLOW:
-            case BattleMage.THE_FINISHER_QUINTUPLE_BLOW:
-            case BattleMage.THE_FINISHER_FINISHING_BLOW:
-                return true;
-        }
         return getHeaderType() == OutHeader.UserMagicAttack;
     }
 

@@ -4,15 +4,11 @@ import kinoko.provider.map.FieldType;
 import kinoko.server.dialog.miniroom.MiniRoom;
 import kinoko.server.header.OutHeader;
 import kinoko.server.packet.OutPacket;
-import kinoko.world.field.summoned.Summoned;
 import kinoko.world.job.explorer.Warrior;
-import kinoko.world.job.legend.Evan;
 import kinoko.world.user.GuildInfo;
 import kinoko.world.user.Pet;
 import kinoko.world.user.User;
 import kinoko.world.user.stat.CharacterTemporaryStat;
-
-import java.util.List;
 
 public final class UserPacket {
     // CUserPool::OnPacket ---------------------------------------------------------------------------------------------
@@ -78,13 +74,10 @@ public final class UserPacket {
 
         user.getCharacterData().getCoupleRecord().encodeForRemote(outPacket);
 
-        // CUser::DarkForceEffect | CDragon::CreateEffect | CUser::LoadSwallowingEffect
+        // CUser::DarkForceEffect | CUser::LoadSwallowingEffect
         byte effectFlag = 0;
         if (Warrior.isBerserkEffect(user)) {
             effectFlag |= 0x1;
-        }
-        if (Evan.isDragonFury(user)) {
-            effectFlag |= 0x2;
         }
         if (user.getSecondaryStat().hasOption(CharacterTemporaryStat.Swallow_Mob)) {
             effectFlag |= 0x4;
@@ -197,46 +190,4 @@ public final class UserPacket {
         return outPacket;
     }
 
-    public static OutPacket userItemHyperUpgradeEffect(User user, boolean success, boolean cursed, boolean enchantSkill) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.UserItemHyperUpgradeEffect);
-        outPacket.encodeInt(user.getCharacterId());
-        outPacket.encodeByte(success); // bSuccess
-        outPacket.encodeByte(cursed); // bCursed
-        outPacket.encodeByte(enchantSkill); // bEnchantSkill
-        outPacket.encodeInt(0); // nEnchantCategory
-        return outPacket;
-    }
-
-    public static OutPacket userItemOptionUpgradeEffect(User user, boolean success, boolean cursed, boolean enchantSkill) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.UserItemOptionUpgradeEffect);
-        outPacket.encodeInt(user.getCharacterId());
-        outPacket.encodeByte(success); // bSuccess
-        outPacket.encodeByte(cursed); // bCursed
-        outPacket.encodeByte(enchantSkill); // bEnchantSkill
-        outPacket.encodeInt(0); // nEnchantCategory
-        return outPacket;
-    }
-
-    public static OutPacket userItemReleaseEffect(User user, int position) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.UserItemReleaseEffect);
-        outPacket.encodeInt(user.getCharacterId());
-        outPacket.encodeShort(position);
-        return outPacket;
-    }
-
-    public static OutPacket userItemUnreleaseEffect(User user, boolean success) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.UserItemUnreleaseEffect);
-        outPacket.encodeInt(user.getCharacterId());
-        outPacket.encodeByte(success);
-        return outPacket;
-    }
-
-    public static OutPacket userTeslaTriangle(User user, List<Summoned> rockAndShockList) {
-        final OutPacket outPacket = OutPacket.of(OutHeader.UserTeslaTriangle);
-        outPacket.encodeInt(user.getCharacterId());
-        for (Summoned summoned : rockAndShockList) {
-            outPacket.encodeInt(summoned.getId());
-        }
-        return outPacket;
-    }
 }
