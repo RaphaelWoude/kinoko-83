@@ -618,22 +618,33 @@ public final class UserHandler {
         final SkillManager sm = user.getSkillManager();
         final Optional<SkillRecord> skillRecordResult = sm.getSkill(skillId);
         if (skillRecordResult.isEmpty()) {
-            log.error("Tried to add a skill {} not owned by user", skillId);
+            log.error("Tried to add skill {} not owned by user", skillId);
             user.dispose();
             return;
         }
         final SkillRecord skillRecord = skillRecordResult.get();
 
+        // Check skill req
+        for (var entry : skillInfo.getReqSkills().entrySet()) {
+            final int reqSkillId = entry.getKey();
+            final int reqSkillLevel = entry.getValue();
+            if (user.getSkillLevel(reqSkillId) < reqSkillLevel) {
+                log.error("Tried to add skill {} without the required skill {}", skillId, reqSkillId);
+                user.dispose();
+                return;
+            }
+        }
+
         // Check skill level
         if (SkillConstants.isSkillNeedMasterLevel(skillId)) {
             if (skillRecord.getSkillLevel() >= skillRecord.getMasterLevel()) {
-                log.error("Tried to add a skill {} at master level {}/{}", skillId, skillRecord.getSkillLevel(), skillRecord.getMasterLevel());
+                log.error("Tried to add skill {} at master level {}/{}", skillId, skillRecord.getSkillLevel(), skillRecord.getMasterLevel());
                 user.dispose();
                 return;
             }
         } else {
             if (skillRecord.getSkillLevel() >= skillInfo.getMaxLevel()) {
-                log.error("Tried to add a skill {} at max level {}/{}", skillId, skillRecord.getSkillLevel(), skillInfo.getMaxLevel());
+                log.error("Tried to add skill {} at max level {}/{}", skillId, skillRecord.getSkillLevel(), skillInfo.getMaxLevel());
                 user.dispose();
                 return;
             }

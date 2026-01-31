@@ -26,6 +26,7 @@ public final class SkillInfo {
     private final boolean combatOrders;
     private final boolean psd;
     private final List<Integer> psdSkills;
+    private final Map<Integer, Integer> reqSkills;
     private final List<ActionType> action;
     private final ActionType statAction;
     private final Map<SkillStat, List<Integer>> stats;
@@ -36,7 +37,7 @@ public final class SkillInfo {
     private final int skillEntryCrc;
     private final List<Integer> levelDataCrc;
 
-    public SkillInfo(int skillId, int maxLevel, int masterLevel, boolean invisible, boolean combatOrders, boolean psd, List<Integer> psdSkills, List<ActionType> action, ActionType statAction, Map<SkillStat, List<Integer>> stats, List<Rect> rects, ElementAttribute elemAttr, Map<SummonedActionType, SummonedAttackInfo> summonedAttack) {
+    public SkillInfo(int skillId, int maxLevel, int masterLevel, boolean invisible, boolean combatOrders, boolean psd, List<Integer> psdSkills, Map<Integer, Integer> reqSkills, List<ActionType> action, ActionType statAction, Map<SkillStat, List<Integer>> stats, List<Rect> rects, ElementAttribute elemAttr, Map<SummonedActionType, SummonedAttackInfo> summonedAttack) {
         this.skillId = skillId;
         this.maxLevel = maxLevel;
         this.masterLevel = masterLevel;
@@ -44,6 +45,7 @@ public final class SkillInfo {
         this.combatOrders = combatOrders;
         this.psd = psd;
         this.psdSkills = psdSkills;
+        this.reqSkills = reqSkills;
         this.action = action;
         this.statAction = statAction;
         this.stats = stats;
@@ -85,6 +87,10 @@ public final class SkillInfo {
 
     public List<Integer> getPsdSkills() {
         return psdSkills;
+    }
+
+    public Map<Integer, Integer> getReqSkills() {
+        return reqSkills;
     }
 
     public int getValue(SkillStat stat, int slv) {
@@ -182,10 +188,12 @@ public final class SkillInfo {
         return "SkillInfo{" +
                 "skillId=" + skillId +
                 ", maxLevel=" + maxLevel +
+                ", masterLevel=" + masterLevel +
                 ", invisible=" + invisible +
                 ", combatOrders=" + combatOrders +
                 ", psd=" + psd +
                 ", psdSkills=" + psdSkills +
+                ", reqSkills=" + reqSkills +
                 ", action=" + action +
                 ", statAction=" + statAction +
                 ", stats=" + stats +
@@ -258,6 +266,7 @@ public final class SkillInfo {
             rects.add(rectMap.getOrDefault(slv, null));
         }
         final List<Integer> psdSkills = resolvePsdSkills(skillProp);
+        final Map<Integer, Integer> reqSkills = resolveReqSkills(skillProp);
         final List<ActionType> action = resolveAction(skillProp);
         final ElementAttribute elemAttr = resolveElemAttr(skillProp);
         final Map<SummonedActionType, SummonedAttackInfo> summonedAttack = resolveSummonedAttack(skillProp);
@@ -269,6 +278,7 @@ public final class SkillInfo {
                 WzProvider.getInteger(skillProp.get("combatOrders"), 0) != 0,
                 WzProvider.getInteger(skillProp.get("psd"), 0) != 0,
                 Collections.unmodifiableList(psdSkills),
+                Collections.unmodifiableMap(reqSkills),
                 Collections.unmodifiableList(action),
                 statAction,
                 Collections.unmodifiableMap(stats),
@@ -323,6 +333,7 @@ public final class SkillInfo {
             stats.put(stat, Collections.unmodifiableList(levelData));
         }
         final List<Integer> psdSkills = resolvePsdSkills(skillProp);
+        final Map<Integer, Integer> reqSkills = resolveReqSkills(skillProp);
         final List<ActionType> action = resolveAction(skillProp);
         final ElementAttribute elemAttr = resolveElemAttr(skillProp);
         final Map<SummonedActionType, SummonedAttackInfo> summonedAttack = resolveSummonedAttack(skillProp);
@@ -334,6 +345,7 @@ public final class SkillInfo {
                 WzProvider.getInteger(skillProp.get("combatOrders"), 0) != 0,
                 WzProvider.getInteger(skillProp.get("psd"), 0) != 0,
                 Collections.unmodifiableList(psdSkills),
+                Collections.unmodifiableMap(reqSkills),
                 Collections.unmodifiableList(action),
                 statAction,
                 Collections.unmodifiableMap(stats),
@@ -350,6 +362,16 @@ public final class SkillInfo {
             }
         }
         return psdSkills;
+    }
+
+    private static Map<Integer, Integer> resolveReqSkills(WzProperty skillProp) {
+        final Map<Integer, Integer> reqSkills = new HashMap<>();
+        if (skillProp.get("req") instanceof WzProperty reqProp) {
+            for (var entry : reqProp.getItems().entrySet()) {
+                reqSkills.put(WzProvider.getInteger(entry.getKey()), WzProvider.getInteger((entry.getValue())));
+            }
+        }
+        return reqSkills;
     }
 
     private static List<ActionType> resolveAction(WzProperty skillProp) {
