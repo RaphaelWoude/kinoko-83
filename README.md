@@ -1,6 +1,7 @@
 ## Kinoko
 
 Kinoko is a server emulator for the popular mushroom game.
+This is a modified incomplete version of game version 83.
 
 ## Setup
 
